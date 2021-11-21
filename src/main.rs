@@ -1,6 +1,8 @@
 use args::{parse_args, Subcommand};
+use commands::provision::provision;
 
 mod args;
+mod commands;
 mod extensions;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -24,15 +26,9 @@ fn main() {
             }
 
             match args.subcommand {
-                Subcommand::Provision { dry_run } => {
-                    println!("TODO: implement provision: dry_run={}", dry_run)
-                }
-                Subcommand::Help => {
-                    help();
-                }
-                Subcommand::Version => {
-                    version();
-                }
+                Subcommand::Provision { dry_run } => provision(dry_run),
+                Subcommand::Help => help(),
+                Subcommand::Version => version(),
             }
         }
         Err(err) => {

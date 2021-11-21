@@ -1,18 +1,15 @@
 use crate::extensions::{pico_args::PicoArgsExt, vec_os_string::VecOsStringToStringExt};
 
-#[derive(Debug)]
 pub struct Arguments {
     pub global: GlobalArguments,
     pub subcommand: Subcommand,
 }
 
-#[derive(Debug)]
 pub struct GlobalArguments {
     pub help: bool,
     pub version: bool,
 }
 
-#[derive(Debug)]
 pub enum Subcommand {
     Provision { dry_run: bool },
     Help,
