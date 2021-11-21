@@ -1,9 +1,9 @@
-use args::{parse_args, Subcommand};
-use commands::provision::provision;
-
 mod args;
 mod commands;
 mod extensions;
+
+use args::{parse_args, Subcommand};
+use commands::provision::provision;
 
 const CARGO_PKG_VERSION: &str = env!("CARGO_PKG_VERSION");
 const VERSION: &str = const_format::formatcp!("nk version {}", CARGO_PKG_VERSION);
@@ -31,11 +31,13 @@ fn main() {
                 Subcommand::Version => version(),
             }
         }
-        Err(err) => {
-            eprintln!("nk: {}", err);
-            std::process::exit(1);
-        }
+        Err(err) => exit(1, &err),
     }
+}
+
+fn exit(code: i32, err: &dyn std::fmt::Display) -> ! {
+    eprintln!("nk: {}", err);
+    std::process::exit(code);
 }
 
 fn help() {
