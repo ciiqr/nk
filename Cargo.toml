@@ -9,3 +9,4 @@ edition = "2021"
 pico-args = "0.4.2"
 const_format = "0.2.22"
 indoc = "1.0"
+yaml-rust = { version = "0.5", package = "yaml-rust-davvid" }

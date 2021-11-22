@@ -32,12 +32,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "linked-hash-map"
+version = "0.5.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fb9b38af92608140b86b693604b9ffcc5824240a484d1ecd4795bacb2fe88f3"
+
+[[package]]
 name = "nk"
 version = "0.1.0"
 dependencies = [
  "const_format",
  "indoc",
  "pico-args",
+ "yaml-rust-davvid",
 ]
 
 [[package]]
@@ -75,3 +82,12 @@ name = "unindent"
 version = "0.1.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f14ee04d9415b52b3aeab06258a3f07093182b88ba0f9b8d203f211a7a7d41c7"
+
+[[package]]
+name = "yaml-rust-davvid"
+version = "0.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ff0648c4e5c02911a6acf9e60fae9becf2bab890c682cd3126c9318a4619ce2b"
+dependencies = [
+ "linked-hash-map",
+]
