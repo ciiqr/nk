@@ -24,15 +24,17 @@ pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
         version: pargs.contains_any(["-v", "--version"]),
     };
 
-    let subcommand = match pargs.subcommand()?.as_deref() {
-        Some("p" | "provision") => Ok(Subcommand::Provision {
-            dry_run: pargs.contains_any("--dry-run"),
-        }),
-        Some("h" | "help") => Ok(Subcommand::Help),
-        Some("v" | "version") => Ok(Subcommand::Version),
-        Some(input) => Err(format!("unknown subcommand: {}", input)),
-        None => Ok(Subcommand::Help),
-    }?;
+    let provided_subcommand = parse_subcommand(&mut pargs)?;
+
+    // NOTE: -h/-v override the provided subcommand
+    // - we still parse it though so its arguments aren't unused
+    let subcommand = if global.help {
+        Subcommand::Help
+    } else if global.version {
+        Subcommand::Version
+    } else {
+        provided_subcommand
+    };
 
     let remaining = pargs.finish();
     if !remaining.is_empty() {
@@ -44,4 +46,18 @@ pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
     }
 
     return Ok(Arguments { global, subcommand });
+}
+
+fn parse_subcommand(
+    pargs: &mut pico_args::Arguments,
+) -> Result<Subcommand, Box<dyn std::error::Error>> {
+    match pargs.subcommand()?.as_deref() {
+        Some("p" | "provision") => Ok(Subcommand::Provision {
+            dry_run: pargs.contains_any("--dry-run"),
+        }),
+        Some("h" | "help") => Ok(Subcommand::Help),
+        Some("v" | "version") => Ok(Subcommand::Version),
+        Some(input) => Err(format!("unknown subcommand: {}", input).into()),
+        None => Ok(Subcommand::Help),
+    }
 }
