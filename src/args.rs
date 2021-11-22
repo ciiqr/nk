@@ -19,11 +19,7 @@ pub enum Subcommand {
 pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
     let mut pargs = pico_args::Arguments::from_env();
 
-    let global = GlobalArguments {
-        help: pargs.contains_any(["-h", "--help"]),
-        version: pargs.contains_any(["-v", "--version"]),
-    };
-
+    let global = parse_global(&mut pargs);
     let provided_subcommand = parse_subcommand(&mut pargs)?;
 
     // NOTE: -h/-v override the provided subcommand
@@ -46,6 +42,13 @@ pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
     }
 
     return Ok(Arguments { global, subcommand });
+}
+
+fn parse_global(pargs: &mut pico_args::Arguments) -> GlobalArguments {
+    GlobalArguments {
+        help: pargs.contains_any(["-h", "--help"]),
+        version: pargs.contains_any(["-v", "--version"]),
+    }
 }
 
 fn parse_subcommand(
