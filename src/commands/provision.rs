@@ -48,26 +48,31 @@ fn parse_declaration(name: String, yaml: &Yaml) -> Result<Declaration, String> {
     })
 }
 
-// TODO: can we get a filter_map with Result instead...? well really collect into a new iter
-// - kinda want to just .collect() into a new iter
-// .map(|(k, v)| match k {
-//     Yaml::String(key) => Ok((key, v)),
-//     _ => Err("TODO: Invalid format for declaration name"),
-// })
-// _ => Err("TODO: Invalid format for declaration name".into()),
 const KEYWORDS: [&str; 1] = ["when"];
 fn parse_group_declarations(yaml: &Yaml) -> Result<Vec<Declaration>, String> {
     match yaml {
-        Yaml::Hash(hash) => hash
-            .iter()
-            .filter_map(|(k, v)| match k {
-                Yaml::String(key) => Some((key, v)),
-                // TODO: need an error or to figure out .collect().iter()
-                _ => None,
-            })
-            .filter(|(k, _)| !KEYWORDS.contains(&k.as_str()))
-            .map(|(k, v)| parse_declaration(k.into(), v))
-            .collect(),
+        Yaml::Hash(hash) => {
+            let mut err: Result<(), String> = Ok(());
+
+            let res = hash
+                .iter()
+                .filter_map(|(k, v)| match k {
+                    Yaml::String(key) => Some((key, v)),
+                    _ => {
+                        // TODO: there's gotta be a cleaner way...
+                        err = Err("Invalid type for top level key".into());
+                        None
+                    }
+                })
+                .filter(|(k, _)| !KEYWORDS.contains(&k.as_str()))
+                .map(|(k, v)| parse_declaration(k.into(), v))
+                .collect();
+
+            // Check for key type errors
+            err?;
+
+            res
+        }
         Yaml::Null => Ok(vec![]), // allow empty files
         _ => Err(format!("Invalid format for top level declarations: {:#?}", yaml).into()),
     }
