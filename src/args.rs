@@ -1,4 +1,7 @@
-use crate::extensions::{PicoArgsExt, VecOsStringToStringExt};
+use crate::{
+    commands::ProvisionArgs,
+    extensions::{PicoArgsExt, VecOsStringToStringExt},
+};
 
 pub struct Arguments {
     pub global: GlobalArguments,
@@ -11,7 +14,7 @@ pub struct GlobalArguments {
 }
 
 pub enum Subcommand {
-    Provision { dry_run: bool },
+    Provision { args: ProvisionArgs },
     Help,
     Version,
 }
@@ -56,7 +59,9 @@ fn parse_subcommand(
 ) -> Result<Subcommand, Box<dyn std::error::Error>> {
     match pargs.subcommand()?.as_deref() {
         Some("p" | "provision") => Ok(Subcommand::Provision {
-            dry_run: pargs.contains_any("--dry-run"),
+            args: ProvisionArgs {
+                dry_run: pargs.contains_any("--dry-run"),
+            },
         }),
         Some("h" | "help") => Ok(Subcommand::Help),
         Some("v" | "version") => Ok(Subcommand::Version),

@@ -9,7 +9,7 @@ use commands::{help, provision, version};
 fn main() {
     match parse_args() {
         Ok(args) => match match args.subcommand {
-            Subcommand::Provision { dry_run } => provision(dry_run),
+            Subcommand::Provision { args } => provision(args),
             Subcommand::Help => help(),
             Subcommand::Version => version(),
         } {

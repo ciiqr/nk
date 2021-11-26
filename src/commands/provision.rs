@@ -1,7 +1,11 @@
 use crate::state;
 
+pub struct ProvisionArgs {
+    pub dry_run: bool,
+}
+
 // TODO: wrap most errors in our own, more user friendly error
-pub fn provision(dry_run: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn provision(args: ProvisionArgs) -> Result<(), Box<dyn std::error::Error>> {
     // TODO: need to solidify:
     // - how we determine config directories (config priority? cli args, ./nk.yml, ~/.nk.yml, ? /etc/nk.yml)
     //   - sources: [~/Projects/config, ~/Projects/config-private]
@@ -38,7 +42,7 @@ pub fn provision(dry_run: bool) -> Result<(), Box<dyn std::error::Error>> {
     // }
     // println!("{}", output);
 
-    println!("TODO: implement provision: dry_run={}", dry_run);
+    println!("TODO: implement provision: dry_run={}", args.dry_run);
 
     Ok(())
 }
