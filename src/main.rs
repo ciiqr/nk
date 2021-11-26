@@ -5,10 +5,12 @@ mod state;
 
 use args::{parse_args, Subcommand};
 use commands::{help, provision, version};
+use std::process::exit;
 
 fn main() {
     if let Err(err) = run() {
-        exit(1, &err);
+        eprintln!("nk: {}", err);
+        exit(1);
     }
 }
 
@@ -20,9 +22,4 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         Subcommand::Help => help(),
         Subcommand::Version => version(),
     }
-}
-
-fn exit(code: i32, err: &dyn std::fmt::Display) -> ! {
-    eprintln!("nk: {}", err);
-    std::process::exit(code);
 }
