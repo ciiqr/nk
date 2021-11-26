@@ -1,4 +1,4 @@
-use crate::extensions::{pico_args::PicoArgsExt, vec_os_string::VecOsStringToStringExt};
+use crate::extensions::{PicoArgsExt, VecOsStringToStringExt};
 
 pub struct Arguments {
     pub global: GlobalArguments,
