@@ -7,16 +7,18 @@ use args::{parse_args, Subcommand};
 use commands::{help, provision, version};
 
 fn main() {
-    match parse_args() {
-        Ok(args) => match match args.subcommand {
-            Subcommand::Provision { args } => provision(args),
-            Subcommand::Help => help(),
-            Subcommand::Version => version(),
-        } {
-            Ok(_) => (),
-            Err(err) => exit(1, &err),
-        },
-        Err(err) => exit(1, &err),
+    if let Err(err) = run() {
+        exit(1, &err);
+    }
+}
+
+fn run() -> Result<(), Box<dyn std::error::Error>> {
+    let arguments = parse_args()?;
+
+    match arguments.subcommand {
+        Subcommand::Provision { args } => provision(args),
+        Subcommand::Help => help(),
+        Subcommand::Version => version(),
     }
 }
 
