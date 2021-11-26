@@ -36,7 +36,7 @@ pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
     if !remaining.is_empty() {
         return Err(format!(
             "unrecognized arguments: {}",
-            remaining.to_str_vec().join(" ")
+            remaining.to_str_vec()?.join(" ")
         )
         .into());
     }

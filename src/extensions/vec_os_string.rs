@@ -1,10 +1,12 @@
 pub trait VecOsStringToStringExt {
-    fn to_str_vec(&self) -> Vec<&str>;
+    fn to_str_vec(&self) -> Result<Vec<&str>, String>;
 }
 
 impl VecOsStringToStringExt for Vec<std::ffi::OsString> {
-    fn to_str_vec(&self) -> Vec<&str> {
-        // TODO: probs change return to result with error from e.to_str().ok_or(Err(e)) or something
-        return self.iter().map(|e| e.to_str().unwrap_or("")).collect();
+    fn to_str_vec(&self) -> Result<Vec<&str>, String> {
+        self.iter()
+            .map(|e| e.to_str())
+            .map(|e| e.ok_or("Invalid UTF-8 characters in OsString of to_str_vec".into()))
+            .collect()
     }
 }
