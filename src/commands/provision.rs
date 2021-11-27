@@ -1,5 +1,6 @@
 use crate::state;
 
+#[derive(Debug)]
 pub struct ProvisionArgs {
     pub dry_run: bool,
 }
@@ -15,7 +16,7 @@ pub fn provision(args: ProvisionArgs) -> Result<(), Box<dyn std::error::Error>> 
     // https://github.com/rust-lang/rust/issues/46016#issuecomment-605624865
     // https://crates.io/crates/nix
 
-    println!("TODO: implement provision: dry_run={}", args.dry_run);
+    println!("TODO: implement provision: {:?}", args);
 
     Ok(())
 }
