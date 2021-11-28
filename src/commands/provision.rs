@@ -1,4 +1,6 @@
-use crate::state;
+use std::{path::PathBuf, str::FromStr};
+
+use crate::{config::Config, state};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -6,9 +8,10 @@ pub struct ProvisionArgs {
 }
 
 // TODO: wrap most errors in our own, more user friendly error
-pub fn provision(args: ProvisionArgs) -> Result<(), Box<dyn std::error::Error>> {
+pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // TODO: load from sources instead of static file
-    let file = state::File::from_path(expand_user("~/Projects/nk/sample.yml"))?;
+    let file =
+        state::File::from_path(PathBuf::from_str(&expand_user("~/Projects/nk/sample.yml"))?)?;
     println!("{:#?}", file);
 
     // TODO: consider improving broken pipe error:
@@ -17,6 +20,7 @@ pub fn provision(args: ProvisionArgs) -> Result<(), Box<dyn std::error::Error>> 
     // https://crates.io/crates/nix
 
     println!("TODO: implement provision: {:?}", args);
+    println!("with: {:?}", config);
 
     Ok(())
 }

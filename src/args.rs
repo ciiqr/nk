@@ -1,3 +1,5 @@
+use std::path::PathBuf;
+
 use crate::{
     commands::ProvisionArgs,
     extensions::{PicoArgsExt, VecOsStringToStringExt},
@@ -11,6 +13,7 @@ pub struct Arguments {
 pub struct GlobalArguments {
     pub help: bool,
     pub version: bool,
+    pub config: Option<PathBuf>,
 }
 
 pub enum Subcommand {
@@ -51,6 +54,9 @@ fn parse_global(pargs: &mut pico_args::Arguments) -> GlobalArguments {
     GlobalArguments {
         help: pargs.contains_any(["-h", "--help"]),
         version: pargs.contains_any(["-v", "--version"]),
+        config: pargs
+            .opt_value_from_fn(["-c", "--config"], |s| PathBuf::try_from(s))
+            .unwrap_or(None),
     }
 }
 
