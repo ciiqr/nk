@@ -6,7 +6,7 @@ use yaml_rust::{Yaml, YamlLoader};
 #[derive(Debug)]
 pub struct Config {
     pub machine: String,
-    pub sources: Vec<String>,
+    pub sources: Vec<PathBuf>,
 }
 
 impl Config {
@@ -39,6 +39,10 @@ impl Config {
                     .iter()
                     .map(|y| y.to_owned().into_string())
                     .map(|s| s.ok_or("Invalid format for source"))
+                    .map(|s| match s {
+                        Ok(s) => Ok(PathBuf::from(expand_user(&s))),
+                        Err(err) => Err(err),
+                    })
                     .collect(),
                 Yaml::BadValue => Err("Missing required config parameter sources"),
                 _ => Err("TODO: can't determine machine".into()),

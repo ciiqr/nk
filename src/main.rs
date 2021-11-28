@@ -26,3 +26,6 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
         Subcommand::Version => version(),
     }
 }
+
+// TODO: make sure not run as root
+// TODO: figure out how best to support sudo with plugins... (worse case could probably have them provide some plugin definition field that indicates they need to run as root)
