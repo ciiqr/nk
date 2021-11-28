@@ -22,11 +22,7 @@ impl Group {
 
 fn parse_group_when(yaml: &Yaml) -> Result<Vec<Condition>, String> {
     match yaml {
-        Yaml::Array(yamls) => {
-            let res: Result<Vec<Condition>, String> =
-                yamls.iter().map(|y| Condition::from_yaml(&y)).collect();
-            res
-        }
+        Yaml::Array(yamls) => yamls.iter().map(|y| Condition::from_yaml(&y)).collect(),
         Yaml::BadValue => Ok(vec![]),
         // TODO: make the errors context specific. Likely need to pass in details about current file? idk if we can get current line?
         _ => Err("Invalid format for when:".into()),

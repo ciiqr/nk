@@ -25,6 +25,7 @@ impl Config {
         let yaml = yaml_documents.get(0).ok_or("config file empty")?;
 
         // TODO: MAYBE: make sure no unrecognized options? at least warn
+        // TODO: refactor
         Ok(Config {
             machine: match &yaml["machine"] {
                 Yaml::String(me) => Ok(me),
@@ -32,6 +33,7 @@ impl Config {
                 _ => Err("Invalid format for machine"),
             }?
             .into(),
+            // TODO: make sure not empty
             sources: match &yaml["sources"] {
                 Yaml::Array(yamls) => yamls
                     .iter()
