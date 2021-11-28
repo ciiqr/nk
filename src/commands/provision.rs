@@ -9,36 +9,14 @@ pub struct ProvisionArgs {
 
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
-    // machine definitions
-    let machine_files: Vec<PathBuf> = config
-        .sources
-        .iter()
-        .map(|source| source.join("machines.yml"))
-        .filter(|machine_file_path| machine_file_path.is_file())
-        .collect();
-
-    // TODO: parse machine_files
-    for machine_file in machine_files {
-        println!("machine_file: {:?}", machine_file);
-    }
-    // TODO: make sure config.machine defined in files (only once)
-    // TODO: pull roles from parsed machine_files
-    let role_names = vec![
-        "base",
-        "ssh",
-        "git",
-        "restic",
-        "gpg",
-        "frontend",
-        "sublime",
-        "syncthing",
-        "development",
-    ];
-
     // find all state files for this machine
+    let role_names = get_current_machines_role_names(&config.sources)?;
     let roles = find_roles(role_names, &config.sources)?;
     let files = find_files(roles)?;
     // TODO: filter based on "when:" conditions (files[].groups[].when)
+    // TODO: load plugins
+    // TODO: match states to plugins
+    // TODO: run plugins
 
     // TODO: change this to use a propper logger
     for file in files {
@@ -116,4 +94,33 @@ fn find_roles(
     }
 
     return Ok(roles);
+}
+
+fn get_current_machines_role_names(
+    sources: &Vec<PathBuf>,
+) -> Result<Vec<&str>, Box<dyn std::error::Error>> {
+    let machine_files: Vec<PathBuf> = sources
+        .iter()
+        .map(|source| source.join("machines.yml"))
+        .filter(|machine_file_path| machine_file_path.is_file())
+        .collect();
+
+    // TODO: make sure config.machine defined in the files exactly once
+    // TODO: pull roles from parsed machine_files
+    for machine_file in machine_files {
+        println!("machine_file: {:?}", machine_file);
+    }
+
+    // TODO: return real roles
+    return Ok(vec![
+        "base",
+        "ssh",
+        "git",
+        "restic",
+        "gpg",
+        "frontend",
+        "sublime",
+        "syncthing",
+        "development",
+    ]);
 }
