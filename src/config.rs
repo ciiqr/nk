@@ -17,7 +17,7 @@ impl Config {
                 .global
                 .config
                 .as_ref()
-                .unwrap_or(&PathBuf::from_str(&expand_user("~/.nk.yml"))?),
+                .unwrap_or(&PathBuf::from_str(&shellexpand::tilde("~/.nk.yml"))?),
         )?;
         let yaml_documents = YamlLoader::load_from_str(&contents)?;
         // TODO: use serde?
@@ -40,7 +40,7 @@ impl Config {
                     .map(|y| y.to_owned().into_string())
                     .map(|s| s.ok_or("Invalid format for source"))
                     .map(|s| match s {
-                        Ok(s) => Ok(PathBuf::from(expand_user(&s))),
+                        Ok(s) => Ok(PathBuf::from(shellexpand::tilde(&s).to_string())),
                         Err(err) => Err(err),
                     })
                     .collect(),
@@ -49,14 +49,4 @@ impl Config {
             }?,
         })
     }
-}
-
-// TODO: move
-fn expand_user(path: &str) -> String {
-    // TODO: maybe want a more specific outcome, atm this will complain about no such file or directory
-    if let Ok(home) = std::env::var("HOME") {
-        return path.replace("~", &home);
-    }
-
-    return path.into();
 }

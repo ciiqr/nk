@@ -10,3 +10,4 @@ pico-args = "0.4.2"
 const_format = "0.2.22"
 indoc = "1.0.3"
 yaml-rust = { version = "0.5.1", package = "yaml-rust-davvid" }
+shellexpand = "2.1.0"
