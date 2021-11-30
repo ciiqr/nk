@@ -20,7 +20,6 @@ impl Config {
                 .unwrap_or(&PathBuf::from_str(&shellexpand::tilde("~/.nk.yml"))?),
         )?;
         let yaml_documents = YamlLoader::load_from_str(&contents)?;
-        // TODO: use serde?
         // TODO: make sure only one document in the file
         let yaml = yaml_documents.get(0).ok_or("config file empty")?;
 
