@@ -15,14 +15,14 @@ impl Group {
     pub fn from_yaml(yaml: &Yaml) -> Result<Group, String> {
         Ok(Group {
             when: parse_group_when(&yaml[Group::WHEN])?,
-            declarations: parse_group_declarations(&yaml)?,
+            declarations: parse_group_declarations(yaml)?,
         })
     }
 }
 
 fn parse_group_when(yaml: &Yaml) -> Result<Vec<Condition>, String> {
     match yaml {
-        Yaml::Array(yamls) => yamls.iter().map(|y| Condition::from_yaml(&y)).collect(),
+        Yaml::Array(yamls) => yamls.iter().map(|y| Condition::from_yaml(y)).collect(),
         Yaml::BadValue => Ok(vec![]),
         // TODO: make the errors context specific. Likely need to pass in details about current file? idk if we can get current line?
         _ => Err("Invalid format for when:".into()),
@@ -53,6 +53,9 @@ fn parse_group_declarations(yaml: &Yaml) -> Result<Vec<Declaration>, String> {
             res
         }
         Yaml::Null => Ok(vec![]), // allow empty files
-        _ => Err(format!("Invalid format for top level declarations: {:#?}", yaml).into()),
+        _ => Err(format!(
+            "Invalid format for top level declarations: {:#?}",
+            yaml
+        )),
     }
 }

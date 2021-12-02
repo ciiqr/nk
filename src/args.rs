@@ -47,7 +47,7 @@ pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
         .into());
     }
 
-    return Ok(Arguments { global, subcommand });
+    Ok(Arguments { global, subcommand })
 }
 
 fn parse_global(pargs: &mut pico_args::Arguments) -> GlobalArguments {

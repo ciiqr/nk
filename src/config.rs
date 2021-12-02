@@ -44,7 +44,7 @@ impl Config {
                     })
                     .collect(),
                 Yaml::BadValue => Err("Missing required config parameter sources"),
-                _ => Err("TODO: can't determine machine".into()),
+                _ => Err("TODO: can't determine machine"),
             }?,
         })
     }

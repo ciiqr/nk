@@ -57,7 +57,7 @@ fn find_files(roles: &Vec<Role>) -> Result<Vec<state::File>, Box<dyn std::error:
         }
     }
 
-    return Ok(files);
+    Ok(files)
 }
 
 #[derive(Debug)]
@@ -98,7 +98,7 @@ fn find_roles(
         }
     }
 
-    return Ok(roles);
+    Ok(roles)
 }
 
 fn get_current_machines_role_names(
@@ -115,7 +115,7 @@ fn get_current_machines_role_names(
 
     for machine_file in machine_files {
         for machine in parse_machines_from_path(&machine_file)? {
-            if let Some(_) = machines.get_key_value(&machine.name) {
+            if machines.get_key_value(&machine.name).is_some() {
                 return Err(format!("Machine {} defined more than once", machine.name).into());
             }
 
