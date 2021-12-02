@@ -39,10 +39,10 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
 fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
     let mut files: Vec<state::File> = vec![];
 
-    // TODO: order may matter? probs fine to just have roles ordered tho
-    // TODO: maybe not though, consider if we want to explicitly alphabetize files (within roles? or role sources? def not higher)
     for role in roles {
         for source in &role.sources {
+            let mut source_files: Vec<state::File> = vec![];
+
             for res in std::fs::read_dir(source)? {
                 let dir_entry = res?;
                 let metadata = dir_entry.metadata()?;
@@ -53,12 +53,17 @@ fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Er
 
                 if metadata.is_file() && extension == "yml" {
                     // TODO: files may want to store a Rc reference to their Role (or something like that...)
-                    files.push(state::File::from_path(path)?);
+                    source_files.push(state::File::from_path(path)?);
                 } else {
                     // TODO: likely ignore, but log (debug level)
                     // println!("ignoring: {:?}", path);
                 }
             }
+
+            // sort files (within each source), so all files from one source are alphabetical and before any of the files from the next source)
+            source_files.sort_by(|a, b| a.path.file_name().cmp(&b.path.file_name()));
+
+            files.append(&mut source_files);
         }
     }
 
