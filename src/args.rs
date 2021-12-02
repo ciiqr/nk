@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, str::FromStr};
 
 use crate::{
     commands::ProvisionArgs,
@@ -55,7 +55,7 @@ fn parse_global(pargs: &mut pico_args::Arguments) -> GlobalArguments {
         help: pargs.contains_any(["-h", "--help"]),
         version: pargs.contains_any(["-v", "--version"]),
         config: pargs
-            .opt_value_from_fn(["-c", "--config"], |s| PathBuf::try_from(s))
+            .opt_value_from_fn(["-c", "--config"], PathBuf::from_str)
             .unwrap_or(None),
     }
 }
