@@ -15,5 +15,6 @@ const USAGE: &str = indoc::indoc! {"
 "};
 
 pub fn help() -> Result<(), Box<dyn std::error::Error>> {
-    Ok(println!("{}", USAGE))
+    println!("{}", USAGE);
+    Ok(())
 }

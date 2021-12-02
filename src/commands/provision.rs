@@ -1,5 +1,9 @@
 use crate::{config::Config, state};
-use std::{collections::HashMap, path::PathBuf, vec};
+use std::{
+    collections::HashMap,
+    path::{Path, PathBuf},
+    vec,
+};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -31,7 +35,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
 }
 
 // TODO: move
-fn find_files(roles: &Vec<Role>) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
+fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
     let mut files: Vec<state::File> = vec![];
 
     // TODO: order may matter? probs fine to just have roles ordered tho
@@ -67,8 +71,8 @@ pub struct Role {
 }
 
 fn find_roles(
-    role_names: &Vec<String>,
-    sources: &Vec<PathBuf>,
+    role_names: &[String],
+    sources: &[PathBuf],
 ) -> Result<Vec<Role>, Box<dyn std::error::Error>> {
     let mut roles: Vec<Role> = vec![];
 
@@ -156,7 +160,7 @@ impl Machine {
     }
 }
 
-fn parse_machines_from_path(path: &PathBuf) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
+fn parse_machines_from_path(path: &Path) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
     let contents = std::fs::read_to_string(path)?;
     let yaml_documents = YamlLoader::load_from_str(&contents)?;
     // TODO: make sure only one document in the file
