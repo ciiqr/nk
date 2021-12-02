@@ -21,5 +21,5 @@ impl File {
 }
 
 fn parse_groups(yamls: &[Yaml]) -> Result<Vec<Group>, String> {
-    yamls.iter().map(|c| Group::from_yaml(c)).collect()
+    yamls.iter().map(Group::from_yaml).collect()
 }
