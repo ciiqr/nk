@@ -14,7 +14,7 @@ pub struct ProvisionArgs {
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // find all state files for this machine
     let role_names = get_current_machines_role_names(&config)?;
-    let roles = find_roles(&role_names, &config.sources)?;
+    let roles = find_roles(&role_names, &config.sources);
     let files = find_files(&roles)?;
 
     // TODO: filter based on "when:" conditions (files[].groups[].when)
@@ -26,7 +26,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     println!("TODO: implement provision:");
     println!("{:?}", args);
     println!("{:?}", config);
-    println!("{:?}", roles);
+    println!("{:#?}", roles);
     for file in files {
         println!("{:#?}", file);
     }
@@ -70,39 +70,22 @@ pub struct Role {
     pub sources: Vec<PathBuf>,
 }
 
-fn find_roles(
-    role_names: &[String],
-    sources: &[PathBuf],
-) -> Result<Vec<Role>, Box<dyn std::error::Error>> {
-    let mut roles: Vec<Role> = vec![];
+fn find_role_sources(role_name: &String, sources: &[PathBuf]) -> Vec<PathBuf> {
+    sources
+        .iter()
+        .map(|source| source.join(role_name))
+        .filter(|role_path| role_path.is_dir())
+        .collect()
+}
 
-    // TODO: explicitly look for each role name, this way we end up with the roles ordered
-    for source in sources {
-        for res in std::fs::read_dir(source)? {
-            let dir_entry = res?;
-            let metadata = dir_entry.metadata()?;
-            let path = dir_entry.path();
-            let file_name = path
-                .file_name()
-                .ok_or("TODO: couldn't get filename for file...")?
-                .to_str()
-                .ok_or("TODO: could not convert os string to utf-8")?;
-
-            // role source
-            if metadata.is_dir() && role_names.contains(&file_name.into()) {
-                roles.push(Role {
-                    name: file_name.into(),
-                    // TODO: we want all the sources in one role, not one role per-source...
-                    sources: vec![path],
-                });
-            } else {
-                // TODO: likely ignore, but log (debug level)
-                // println!("ignoring: {:?}", path);
-            }
-        }
-    }
-
-    Ok(roles)
+fn find_roles(role_names: &[String], sources: &[PathBuf]) -> Vec<Role> {
+    role_names
+        .iter()
+        .map(|role_name| Role {
+            name: role_name.into(),
+            sources: find_role_sources(role_name, sources),
+        })
+        .collect()
 }
 
 fn get_current_machines_role_names(
