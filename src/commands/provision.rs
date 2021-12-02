@@ -1,6 +1,6 @@
 use crate::{config::Config, state};
 use std::{
-    collections::HashMap,
+    collections::HashSet,
     path::{Path, PathBuf},
     vec,
 };
@@ -13,8 +13,8 @@ pub struct ProvisionArgs {
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // find all state files for this machine
-    let role_names = get_current_machines_role_names(&config)?;
-    let roles = find_roles(&role_names, &config.sources);
+    let machine = get_current_machine(&config)?;
+    let roles = find_roles(&machine.roles, &config.sources);
     let files = find_files(&roles)?;
 
     // TODO: filter based on "when:" conditions (files[].groups[].when)
@@ -26,6 +26,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     println!("TODO: implement provision:");
     println!("{:?}", args);
     println!("{:?}", config);
+    println!("{:?}", machine);
     println!("{:#?}", roles);
     for file in files {
         println!("{:#?}", file);
@@ -88,34 +89,39 @@ fn find_roles(role_names: &[String], sources: &[PathBuf]) -> Vec<Role> {
         .collect()
 }
 
-fn get_current_machines_role_names(
-    config: &Config,
-) -> Result<Vec<String>, Box<dyn std::error::Error>> {
-    let machine_files: Vec<PathBuf> = config
-        .sources
+fn find_machine_files(sources: &[PathBuf]) -> Vec<PathBuf> {
+    sources
         .iter()
         .map(|source| source.join("machines.yml"))
         .filter(|machine_file_path| machine_file_path.is_file())
-        .collect();
+        .collect()
+}
 
-    let mut machines = HashMap::new();
+fn find_machines(sources: &[PathBuf]) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
+    let mut machine_names = HashSet::new();
+    let mut machines = vec![];
 
-    for machine_file in machine_files {
+    for machine_file in find_machine_files(&sources) {
         for machine in parse_machines_from_path(&machine_file)? {
-            if machines.get_key_value(&machine.name).is_some() {
+            if machine_names.contains(&machine.name) {
                 return Err(format!("Machine {} defined more than once", machine.name).into());
             }
 
-            machines.insert(machine.name.clone(), machine);
+            machine_names.insert(machine.name.clone());
+            machines.push(machine);
         }
     }
 
-    // TODO: above should be separate func
-    let current_machine = machines
-        .get(&config.machine)
-        .ok_or("Current machine not found")?;
+    Ok(machines)
+}
 
-    Ok(current_machine.roles.clone())
+fn get_current_machine(config: &Config) -> Result<Machine, Box<dyn std::error::Error>> {
+    let machines = find_machines(&config.sources)?;
+
+    Ok(machines
+        .into_iter()
+        .find(|m| m.name == config.machine)
+        .ok_or("Current machine not found")?)
 }
 
 // TODO: move

@@ -45,7 +45,7 @@ fn parse_group_declarations(yaml: &Yaml) -> Result<Vec<Declaration>, String> {
                     }
                 })
                 .filter(|(k, _)| !Group::KEYWORDS.contains(&k.as_str()))
-                .map(|(k, v)| Declaration::from_yaml(k.into(), v))
+                .map(|(k, v)| Declaration::from_yaml(k.into(), v.to_owned()))
                 .collect();
 
             // Check for key type errors

@@ -7,11 +7,11 @@ pub struct Declaration {
 }
 
 impl Declaration {
-    pub fn from_yaml(name: String, yaml: &Yaml) -> Result<Declaration, String> {
+    pub fn from_yaml(name: String, yaml: Yaml) -> Result<Declaration, String> {
         Ok(Declaration {
             name,
             states: match yaml {
-                Yaml::Array(arr) => Ok(arr.to_vec()),
+                Yaml::Array(arr) => Ok(arr),
 
                 // singletons are converted to an array of 1
                 Yaml::Null
@@ -19,7 +19,7 @@ impl Declaration {
                 | Yaml::String(_)
                 | Yaml::Boolean(_)
                 | Yaml::Hash(_)
-                | Yaml::Real(_) => Ok(vec![yaml.to_owned()]),
+                | Yaml::Real(_) => Ok(vec![yaml]),
 
                 _ => Err("Invalid format for declaration"),
             }?,

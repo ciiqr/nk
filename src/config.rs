@@ -36,7 +36,7 @@ impl Config {
             sources: match &yaml["sources"] {
                 Yaml::Array(yamls) => yamls
                     .iter()
-                    .map(|y| y.to_owned().into_string())
+                    .map(|y| y.as_str())
                     .map(|s| s.ok_or("Invalid format for source"))
                     .map(|s| match s {
                         Ok(s) => Ok(PathBuf::from(shellexpand::tilde(&s).to_string())),
