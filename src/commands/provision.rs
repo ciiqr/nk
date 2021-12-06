@@ -17,15 +17,45 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let roles = find_roles(&machine.roles, &config.sources);
     let files = find_files(&roles)?;
 
+    // TODO: initialize base vars (machine, roles, ?sources)
+
     // TODO: filter based on "when:" conditions (files[].groups[].when)
     // TODO: load plugins
+    // TODO: call setup command on all plugins to determine how to interface with them? maybe only once required?
+    // TODO: maybe move plugin config to sources... likely with "when:" conditions OR:
+    // TODO: maybe NEED a "plugin.yml" to add basic "when:" conditions
+
     // TODO: match states to plugins
-    // TODO: run plugins
+
+    // TODO: run plugins:
+    for plugin in &config.plugins {
+        // TODO: create a set of proper plugin objects with below process logic
+        match &plugin.source {
+            crate::config::PluginSource::Local { source } => {
+                // TODO: support other state formats...
+                let child = std::process::Command::new(source)
+                    .arg("provision")
+                    .arg("--state")
+                    .arg("example state")
+                    .stdout(std::process::Stdio::piped())
+                    .stderr(std::process::Stdio::piped())
+                    .spawn()
+                    .expect("failed to execute child"); // TODO: handle errors smoother
+                let output = child.wait_with_output().expect("failed to wait on child"); // TODO: handle errors smoother
+                assert!(output.status.success()); // TODO: handle errors smoother
+
+                // TODO: print stdout/stderr? as applicable
+                // let mut me = output.stdout.as_mut().unwrap();
+                println!("output: {:#?}", output);
+                // println!("stdout: {:?}", String::from_utf8(output.stdout));
+            }
+        }
+    }
 
     // TODO: change this to use a propper logger
     println!("TODO: implement provision:");
     println!("{:?}", args);
-    println!("{:?}", config);
+    println!("{:#?}", config);
     println!("{:?}", machine);
     println!("{:#?}", roles);
     for file in files {

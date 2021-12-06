@@ -1,12 +1,39 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{path::PathBuf, str::FromStr, vec};
 
 use crate::args::Arguments;
 use yaml_rust::{Yaml, YamlLoader};
+
+// TODO: move
+#[derive(Debug)]
+pub enum PluginSource {
+    Local { source: PathBuf },
+}
+#[derive(Debug)]
+pub struct ConfigPlugin {
+    pub source: PluginSource,
+}
+
+impl ConfigPlugin {
+    pub fn from_yaml(yaml: &Yaml) -> Result<ConfigPlugin, Box<dyn std::error::Error>> {
+        match yaml {
+            Yaml::String(source) => match source.chars().nth(1) {
+                Some('~' | '.' | '/') => Ok(ConfigPlugin {
+                    source: PluginSource::Local {
+                        source: PathBuf::from_str(&shellexpand::tilde(source))?,
+                    },
+                }),
+                Some(_) | None => Err(format!("Unrecognized plugin source: {}", source).into()),
+            },
+            _ => Err("Invalid format for plugin".into()),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub struct Config {
     pub machine: String,
     pub sources: Vec<PathBuf>,
+    pub plugins: Vec<ConfigPlugin>,
 }
 
 impl Config {
@@ -44,8 +71,17 @@ impl Config {
                     })
                     .collect(),
                 Yaml::BadValue => Err("Missing required config parameter sources"),
-                _ => Err("TODO: can't determine machine"),
+                _ => Err("Invalid format for sources"),
+            }?,
+            plugins: match &yaml["plugins"] {
+                Yaml::Array(yamls) => parse_plugins(yamls),
+                Yaml::BadValue => Ok(vec![]),
+                _ => Err("Invalid format for plugins".into()),
             }?,
         })
     }
+}
+
+fn parse_plugins(yamls: &[Yaml]) -> Result<Vec<ConfigPlugin>, Box<dyn std::error::Error>> {
+    yamls.iter().map(ConfigPlugin::from_yaml).collect()
 }
