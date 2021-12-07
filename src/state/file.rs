@@ -1,25 +1,31 @@
 use super::Group;
+use lazy_static::lazy_static;
+use regex::Regex;
 use std::path::PathBuf;
-use yaml_rust::{Yaml, YamlLoader};
 
 #[derive(Debug)]
 pub struct File {
     pub path: PathBuf,
     pub groups: Vec<Group>,
 }
+lazy_static! {
+    static ref DOCUMENT_SEPERATOR: Regex = Regex::new(r"(?m)^---$").unwrap();
+}
 
 impl File {
     pub fn from_path(path: PathBuf) -> Result<File, Box<dyn std::error::Error>> {
         let contents = std::fs::read_to_string(&path)?;
-        let yaml_documents = YamlLoader::load_from_str(&contents)?;
 
         Ok(File {
             path,
-            groups: parse_groups(&yaml_documents)?,
+            groups: DOCUMENT_SEPERATOR
+                .split(&contents)
+                .map(|doc| serde_yaml::from_str(doc))
+                // TODO: we only want to filter end of stream, else we want an error...
+                .filter(|res| res.is_ok())
+                // TODO: fix proper
+                .map(|res| res.unwrap())
+                .collect(),
         })
     }
-}
-
-fn parse_groups(yamls: &[Yaml]) -> Result<Vec<Group>, String> {
-    yamls.iter().map(Group::from_yaml).collect()
 }

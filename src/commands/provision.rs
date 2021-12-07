@@ -1,4 +1,4 @@
-use crate::{config::Config, state};
+use crate::{config::Config, extensions::SerdeDeserializeFromYamlPath, state};
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -8,6 +8,18 @@ use std::{
 #[derive(Debug)]
 pub struct ProvisionArgs {
     pub dry_run: bool,
+}
+
+// TODO: move
+use serde::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+// TODO: maybe bad name...
+pub struct PluginDefinition {
+    name: String,
+    executable: String,
+    #[serde(default)]
+    when: Vec<String>, // TODO: maybe proper conditions later?
 }
 
 // TODO: wrap most errors in our own, more user friendly error
@@ -33,7 +45,12 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         match &plugin.source {
             crate::config::PluginSource::Local { source } => {
                 // TODO: support other state formats...
-                let child = std::process::Command::new(source)
+                let plugin_yml = source.join("plugin.yml");
+                let plugin_definition = PluginDefinition::from_yaml_file(&plugin_yml)?;
+                let plugin_executable = source.join(&plugin_definition.executable);
+                println!("plugin_definition: {:?}", plugin_definition);
+
+                let child = std::process::Command::new(plugin_executable)
                     .arg("provision")
                     .arg("--state")
                     .arg("example state")
@@ -152,73 +169,71 @@ fn find_machines(sources: &[PathBuf]) -> Result<Vec<Machine>, Box<dyn std::error
 
 fn get_current_machine(config: &Config) -> Result<Machine, Box<dyn std::error::Error>> {
     let machines = find_machines(&config.sources)?;
-
+    println!("machines: {:#?}", machines);
     Ok(machines
         .into_iter()
         .find(|m| m.name == config.machine)
         .ok_or("Current machine not found")?)
 }
 
-// TODO: move
-#[derive(Debug, Clone)]
-pub struct Machine {
-    pub name: String,
-    pub roles: Vec<String>,
-}
-
-use yaml_rust::{Yaml, YamlLoader};
-impl Machine {
-    pub fn from_yaml(name: String, yaml: &Yaml) -> Result<Machine, String> {
-        Ok(Machine {
-            name,
-            // TODO: handle unrecognized options
-            roles: match &yaml["roles"] {
-                Yaml::Array(yamls) => yamls
-                    .iter()
-                    .map(|y| y.to_owned().into_string())
-                    .map(|s| s.ok_or("Invalid format for roles"))
-                    .collect(),
-                _ => Err("Invalid format for machine"),
-            }?,
-        })
-    }
-}
-
+// // TODO: move
 fn parse_machines_from_path(path: &Path) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
-    let contents = std::fs::read_to_string(path)?;
-    let yaml_documents = YamlLoader::load_from_str(&contents)?;
-    // TODO: make sure only one document in the file
-    let yaml = yaml_documents.get(0).ok_or("config file empty")?;
+    let root = Root::from_yaml_file(path)?;
 
-    match parse_machines_from_yaml(yaml) {
-        Ok(machines) => Ok(machines),
-        Err(err) => Err(err.into()),
-    }
+    Ok(root.machines)
 }
 
-fn parse_machines_from_yaml(yaml: &Yaml) -> Result<Vec<Machine>, String> {
-    match yaml {
-        Yaml::Hash(hash) => {
-            let mut err: Result<(), String> = Ok(());
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+struct RawMachine {
+    roles: Vec<String>,
+}
 
-            let res: Result<Vec<Machine>, String> = hash
-                .iter()
-                .filter_map(|(k, v)| match k {
-                    Yaml::String(key) => Some((key, v)),
-                    _ => {
-                        // TODO: there's gotta be a cleaner way...
-                        err = Err("Invalid type for top level key".into());
-                        None
-                    }
-                })
-                .map(|(k, v)| Machine::from_yaml(k.into(), v))
-                .collect();
+#[derive(Debug)]
+pub struct Machine {
+    name: String,
+    roles: Vec<String>,
+}
 
-            // Check for key type errors
-            err?;
-            res
+#[derive(Deserialize, Debug)]
+#[serde(transparent)]
+struct Root {
+    // TODO: is there a way to make this support empty files?
+    #[serde(deserialize_with = "deserialize_map_to_vec_of_named")]
+    machines: Vec<Machine>,
+}
+
+use serde::de::{MapAccess, Visitor};
+
+fn deserialize_map_to_vec_of_named<'de, D>(deserializer: D) -> Result<Vec<Machine>, D::Error>
+where
+    D: serde::de::Deserializer<'de>,
+{
+    struct VecNamedVisitor;
+
+    impl<'de> Visitor<'de> for VecNamedVisitor {
+        type Value = Vec<Machine>;
+
+        fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
+            formatter.write_str("a map")
         }
-        Yaml::Null => Ok(vec![]), // allow empty files
-        _ => Err("Invalid format for machines".into()),
+
+        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
+        where
+            M: MapAccess<'de>,
+        {
+            let mut map = Vec::with_capacity(access.size_hint().unwrap_or(0));
+
+            // TODO: generalize with a from_with_name interface, expects String names
+            while let Some((name, value)) = access.next_entry()? {
+                let RawMachine { roles } = value;
+
+                map.push(Machine { name, roles });
+            }
+
+            Ok(map)
+        }
     }
+
+    deserializer.deserialize_map(VecNamedVisitor)
 }
