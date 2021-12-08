@@ -5,18 +5,6 @@ pub struct ProvisionArgs {
     pub dry_run: bool,
 }
 
-// TODO: move plugins
-use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(deny_unknown_fields)]
-// TODO: maybe bad name...
-pub struct PluginDefinition {
-    name: String,
-    executable: String,
-    #[serde(default)]
-    when: Vec<String>, // TODO: maybe proper conditions later?
-}
-
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // find all state files for this machine
@@ -75,4 +63,16 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     }
 
     Ok(())
+}
+
+// TODO: move plugins
+use serde::{Deserialize, Serialize};
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+// TODO: maybe bad name...
+pub struct PluginDefinition {
+    name: String,
+    executable: String,
+    #[serde(default)]
+    when: Vec<String>, // TODO: maybe proper conditions later?
 }

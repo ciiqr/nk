@@ -23,7 +23,7 @@ impl Machine {
 
     pub fn get_current(config: &Config) -> Result<Machine, Box<dyn std::error::Error>> {
         let machines = find_machines(&config.sources)?;
-        println!("machines: {:#?}", machines); // TODO: remove
+
         Ok(machines
             .into_iter()
             .find(|m| m.name == config.machine)
