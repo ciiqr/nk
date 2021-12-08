@@ -1,19 +1,16 @@
 use crate::{
-    config::Config, extensions::SerdeDeserializeFromYamlPath, state, traits::FromWithName,
-    utils::deserialize_map_to_vec_of_named,
+    config::Config,
+    extensions::SerdeDeserializeFromYamlPath,
+    state::{self, Machine},
 };
-use std::{
-    collections::HashSet,
-    path::{Path, PathBuf},
-    vec,
-};
+use std::{collections::HashSet, path::PathBuf, vec};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
     pub dry_run: bool,
 }
 
-// TODO: move
+// TODO: move plugins
 use serde::{Deserialize, Serialize};
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
@@ -85,7 +82,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     Ok(())
 }
 
-// TODO: move
+// TODO: move files
 fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
     let mut files: Vec<state::File> = vec![];
 
@@ -120,6 +117,7 @@ fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Er
     Ok(files)
 }
 
+// TODO: move roles
 #[derive(Debug)]
 pub struct Role {
     pub name: String,
@@ -144,6 +142,7 @@ fn find_roles(role_names: &[String], sources: &[PathBuf]) -> Vec<Role> {
         .collect()
 }
 
+// TODO: move machines
 fn find_machine_files(sources: &[PathBuf]) -> Vec<PathBuf> {
     sources
         .iter()
@@ -157,7 +156,7 @@ fn find_machines(sources: &[PathBuf]) -> Result<Vec<Machine>, Box<dyn std::error
     let mut machines = vec![];
 
     for machine_file in find_machine_files(sources) {
-        for machine in parse_machines_from_path(&machine_file)? {
+        for machine in Machine::all_from_path(&machine_file)? {
             if machine_names.contains(&machine.name) {
                 return Err(format!("Machine {} defined more than once", machine.name).into());
             }
@@ -177,38 +176,4 @@ fn get_current_machine(config: &Config) -> Result<Machine, Box<dyn std::error::E
         .into_iter()
         .find(|m| m.name == config.machine)
         .ok_or("Current machine not found")?)
-}
-
-// // TODO: move
-fn parse_machines_from_path(path: &Path) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
-    let root = Root::from_yaml_file(path)?;
-
-    Ok(root.machines)
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(deny_unknown_fields)]
-struct RawMachine {
-    roles: Vec<String>,
-}
-
-#[derive(Debug)]
-pub struct Machine {
-    name: String,
-    roles: Vec<String>,
-}
-
-impl FromWithName<RawMachine> for Machine {
-    fn from_with_name(name: String, from: RawMachine) -> Self {
-        let RawMachine { roles } = from;
-        Machine { name, roles }
-    }
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(transparent)]
-struct Root {
-    // TODO: is there a way to make this support empty files?
-    #[serde(deserialize_with = "deserialize_map_to_vec_of_named::<RawMachine, _, _>")]
-    machines: Vec<Machine>,
 }

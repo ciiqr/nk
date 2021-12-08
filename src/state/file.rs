@@ -8,6 +8,7 @@ pub struct File {
     pub path: PathBuf,
     pub groups: Vec<Group>,
 }
+
 lazy_static! {
     static ref DOCUMENT_SEPERATOR: Regex = Regex::new(r"(?m)^---$").unwrap();
 }

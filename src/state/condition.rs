@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields, transparent)]
 pub struct Condition {

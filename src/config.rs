@@ -1,6 +1,5 @@
-use std::{path::PathBuf, str::FromStr, vec};
-
 use crate::args::Arguments;
+use std::{path::PathBuf, str::FromStr, vec};
 use yaml_rust::{Yaml, YamlLoader};
 
 // TODO: move
