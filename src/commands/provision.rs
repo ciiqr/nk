@@ -26,7 +26,7 @@ pub struct PluginDefinition {
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // find all state files for this machine
     let machine = get_current_machine(&config)?;
-    let roles = find_roles(&machine.roles, &config.sources);
+    let roles = state::Role::find_by_names(&machine.roles, &config.sources);
     let files = find_files(&roles)?;
 
     // TODO: initialize base vars (machine, roles, ?sources)
@@ -83,7 +83,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
 }
 
 // TODO: move files
-fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
+fn find_files(roles: &[state::Role]) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
     let mut files: Vec<state::File> = vec![];
 
     for role in roles {
@@ -115,31 +115,6 @@ fn find_files(roles: &[Role]) -> Result<Vec<state::File>, Box<dyn std::error::Er
     }
 
     Ok(files)
-}
-
-// TODO: move roles
-#[derive(Debug)]
-pub struct Role {
-    pub name: String,
-    pub sources: Vec<PathBuf>,
-}
-
-fn find_role_sources(role_name: &str, sources: &[PathBuf]) -> Vec<PathBuf> {
-    sources
-        .iter()
-        .map(|source| source.join(role_name))
-        .filter(|role_path| role_path.is_dir())
-        .collect()
-}
-
-fn find_roles(role_names: &[String], sources: &[PathBuf]) -> Vec<Role> {
-    role_names
-        .iter()
-        .map(|role_name| Role {
-            name: role_name.into(),
-            sources: find_role_sources(role_name, sources),
-        })
-        .collect()
 }
 
 // TODO: move machines
