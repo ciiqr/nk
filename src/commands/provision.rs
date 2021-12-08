@@ -1,9 +1,4 @@
-use crate::{
-    config::Config,
-    extensions::SerdeDeserializeFromYamlPath,
-    state::{self, Machine},
-};
-use std::vec;
+use crate::{config::Config, extensions::SerdeDeserializeFromYamlPath, state};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -25,9 +20,9 @@ pub struct PluginDefinition {
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // find all state files for this machine
-    let machine = Machine::get_current(&config)?;
+    let machine = state::Machine::get_current(&config)?;
     let roles = state::Role::find_by_names(&machine.roles, &config.sources);
-    let files = find_files(&roles)?;
+    let files = state::File::find_by_roles(&roles)?;
 
     // TODO: initialize base vars (machine, roles, ?sources)
 
@@ -80,39 +75,4 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     }
 
     Ok(())
-}
-
-// TODO: move files
-fn find_files(roles: &[state::Role]) -> Result<Vec<state::File>, Box<dyn std::error::Error>> {
-    let mut files: Vec<state::File> = vec![];
-
-    for role in roles {
-        for source in &role.sources {
-            let mut source_files: Vec<state::File> = vec![];
-
-            for res in std::fs::read_dir(source)? {
-                let dir_entry = res?;
-                let metadata = dir_entry.metadata()?;
-                let path = dir_entry.path();
-                let extension = path
-                    .extension()
-                    .ok_or("TODO: couldn't get extension for file..")?;
-
-                if metadata.is_file() && extension == "yml" {
-                    // TODO: files may want to store a Rc reference to their Role (or something like that...)
-                    source_files.push(state::File::from_path(path)?);
-                } else {
-                    // TODO: likely ignore, but log (debug level)
-                    // println!("ignoring: {:?}", path);
-                }
-            }
-
-            // sort files (within each source), so all files from one source are alphabetical and before any of the files from the next source)
-            source_files.sort_by(|a, b| a.path.file_name().cmp(&b.path.file_name()));
-
-            files.append(&mut source_files);
-        }
-    }
-
-    Ok(files)
 }

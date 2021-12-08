@@ -1,4 +1,4 @@
-use super::Group;
+use super::{Group, Role};
 use lazy_static::lazy_static;
 use regex::Regex;
 use std::path::PathBuf;
@@ -28,5 +28,39 @@ impl File {
                 .map(|res| res.unwrap())
                 .collect(),
         })
+    }
+
+    pub fn find_by_roles(roles: &[Role]) -> Result<Vec<File>, Box<dyn std::error::Error>> {
+        let mut files: Vec<File> = vec![];
+
+        for role in roles {
+            for source in &role.sources {
+                let mut source_files: Vec<File> = vec![];
+
+                for res in std::fs::read_dir(source)? {
+                    let dir_entry = res?;
+                    let metadata = dir_entry.metadata()?;
+                    let path = dir_entry.path();
+                    let extension = path
+                        .extension()
+                        .ok_or("TODO: couldn't get extension for file..")?;
+
+                    if metadata.is_file() && extension == "yml" {
+                        // TODO: files may want to store a Rc reference to their Role (or something like that...)
+                        source_files.push(File::from_path(path)?);
+                    } else {
+                        // TODO: likely ignore, but log (debug level)
+                        // println!("ignoring: {:?}", path);
+                    }
+                }
+
+                // sort files (within each source), so all files from one source are alphabetical and before any of the files from the next source)
+                source_files.sort_by(|a, b| a.path.file_name().cmp(&b.path.file_name()));
+
+                files.append(&mut source_files);
+            }
+        }
+
+        Ok(files)
     }
 }
