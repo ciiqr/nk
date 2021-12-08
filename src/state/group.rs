@@ -1,9 +1,8 @@
-use crate::{traits::FromWithName, utils::deserialize_map_to_vec_of_named};
-
 use super::{Condition, Declaration};
-
+use crate::{traits::FromWithName, utils::deserialize_map_to_vec_of_named};
 use serde::{Deserialize, Serialize};
 use serde_yaml::Value;
+
 // TODO: figure out how to map back to map of raw declarations for Serialize
 #[derive(Deserialize, Debug)]
 pub struct Group {

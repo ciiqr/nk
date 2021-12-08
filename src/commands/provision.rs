@@ -126,7 +126,7 @@ pub struct Role {
     pub sources: Vec<PathBuf>,
 }
 
-fn find_role_sources(role_name: &String, sources: &[PathBuf]) -> Vec<PathBuf> {
+fn find_role_sources(role_name: &str, sources: &[PathBuf]) -> Vec<PathBuf> {
     sources
         .iter()
         .map(|source| source.join(role_name))
@@ -156,7 +156,7 @@ fn find_machines(sources: &[PathBuf]) -> Result<Vec<Machine>, Box<dyn std::error
     let mut machine_names = HashSet::new();
     let mut machines = vec![];
 
-    for machine_file in find_machine_files(&sources) {
+    for machine_file in find_machine_files(sources) {
         for machine in parse_machines_from_path(&machine_file)? {
             if machine_names.contains(&machine.name) {
                 return Err(format!("Machine {} defined more than once", machine.name).into());
