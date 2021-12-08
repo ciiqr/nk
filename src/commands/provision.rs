@@ -1,9 +1,9 @@
 use crate::{
     config::Config,
     extensions::SerdeDeserializeFromYamlPath,
-    state::{self},
+    state::{self, Machine},
 };
-use std::{collections::HashSet, path::PathBuf, vec};
+use std::vec;
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -25,7 +25,7 @@ pub struct PluginDefinition {
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // find all state files for this machine
-    let machine = get_current_machine(&config)?;
+    let machine = Machine::get_current(&config)?;
     let roles = state::Role::find_by_names(&machine.roles, &config.sources);
     let files = find_files(&roles)?;
 
@@ -115,40 +115,4 @@ fn find_files(roles: &[state::Role]) -> Result<Vec<state::File>, Box<dyn std::er
     }
 
     Ok(files)
-}
-
-// TODO: move machines
-fn find_machine_files(sources: &[PathBuf]) -> Vec<PathBuf> {
-    sources
-        .iter()
-        .map(|source| source.join("machines.yml"))
-        .filter(|machine_file_path| machine_file_path.is_file())
-        .collect()
-}
-
-fn find_machines(sources: &[PathBuf]) -> Result<Vec<state::Machine>, Box<dyn std::error::Error>> {
-    let mut machine_names = HashSet::new();
-    let mut machines = vec![];
-
-    for machine_file in find_machine_files(sources) {
-        for machine in state::Machine::all_from_path(&machine_file)? {
-            if machine_names.contains(&machine.name) {
-                return Err(format!("Machine {} defined more than once", machine.name).into());
-            }
-
-            machine_names.insert(machine.name.clone());
-            machines.push(machine);
-        }
-    }
-
-    Ok(machines)
-}
-
-fn get_current_machine(config: &Config) -> Result<state::Machine, Box<dyn std::error::Error>> {
-    let machines = find_machines(&config.sources)?;
-    println!("machines: {:#?}", machines);
-    Ok(machines
-        .into_iter()
-        .find(|m| m.name == config.machine)
-        .ok_or("Current machine not found")?)
 }
