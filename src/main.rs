@@ -3,6 +3,8 @@ mod commands;
 mod config;
 mod extensions;
 mod state;
+mod traits;
+mod utils;
 
 use args::{parse_args, Subcommand};
 use commands::{help, provision, version};

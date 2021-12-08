@@ -1,4 +1,7 @@
-use crate::{config::Config, extensions::SerdeDeserializeFromYamlPath, state};
+use crate::{
+    config::Config, extensions::SerdeDeserializeFromYamlPath, state, traits::FromWithName,
+    utils::deserialize_map_to_vec_of_named,
+};
 use std::{
     collections::HashSet,
     path::{Path, PathBuf},
@@ -195,45 +198,17 @@ pub struct Machine {
     roles: Vec<String>,
 }
 
+impl FromWithName<RawMachine> for Machine {
+    fn from_with_name(name: String, from: RawMachine) -> Self {
+        let RawMachine { roles } = from;
+        Machine { name, roles }
+    }
+}
+
 #[derive(Deserialize, Debug)]
 #[serde(transparent)]
 struct Root {
     // TODO: is there a way to make this support empty files?
-    #[serde(deserialize_with = "deserialize_map_to_vec_of_named")]
+    #[serde(deserialize_with = "deserialize_map_to_vec_of_named::<RawMachine, _, _>")]
     machines: Vec<Machine>,
-}
-
-use serde::de::{MapAccess, Visitor};
-
-fn deserialize_map_to_vec_of_named<'de, D>(deserializer: D) -> Result<Vec<Machine>, D::Error>
-where
-    D: serde::de::Deserializer<'de>,
-{
-    struct VecNamedVisitor;
-
-    impl<'de> Visitor<'de> for VecNamedVisitor {
-        type Value = Vec<Machine>;
-
-        fn expecting(&self, formatter: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-            formatter.write_str("a map")
-        }
-
-        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
-        where
-            M: MapAccess<'de>,
-        {
-            let mut map = Vec::with_capacity(access.size_hint().unwrap_or(0));
-
-            // TODO: generalize with a from_with_name interface, expects String names
-            while let Some((name, value)) = access.next_entry()? {
-                let RawMachine { roles } = value;
-
-                map.push(Machine { name, roles });
-            }
-
-            Ok(map)
-        }
-    }
-
-    deserializer.deserialize_map(VecNamedVisitor)
 }
