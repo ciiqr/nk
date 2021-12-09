@@ -1,4 +1,4 @@
-use crate::{config::Config, extensions::SerdeDeserializeFromYamlPath, state};
+use crate::{config::Config, plugins::Plugin, state};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -23,33 +23,13 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // TODO: match states to plugins
 
     // TODO: run plugins:
-    for plugin in &config.plugins {
-        // TODO: create a set of proper plugin objects with below process logic
-        match &plugin.source {
-            crate::config::PluginSource::Local { source } => {
-                // TODO: support other state formats...
-                let plugin_yml = source.join("plugin.yml");
-                let plugin_definition = PluginDefinition::from_yaml_file(&plugin_yml)?;
-                let plugin_executable = source.join(&plugin_definition.executable);
-                println!("plugin_definition: {:?}", plugin_definition);
+    for config_plugin in &config.plugins {
+        let plugin = Plugin::from_config(config_plugin)?;
+        println!("plugin_definition: {:?}", plugin.definition);
 
-                let child = std::process::Command::new(plugin_executable)
-                    .arg("provision")
-                    .arg("--state")
-                    .arg("example state")
-                    .stdout(std::process::Stdio::piped())
-                    .stderr(std::process::Stdio::piped())
-                    .spawn()
-                    .expect("failed to execute child"); // TODO: handle errors smoother
-                let output = child.wait_with_output().expect("failed to wait on child"); // TODO: handle errors smoother
-                assert!(output.status.success()); // TODO: handle errors smoother
-
-                // TODO: print stdout/stderr? as applicable
-                // let mut me = output.stdout.as_mut().unwrap();
-                println!("output: {:#?}", output);
-                // println!("stdout: {:?}", String::from_utf8(output.stdout));
-            }
-        }
+        // TODO: handle errors better
+        plugin.setup()?;
+        plugin.provision()?;
     }
 
     // TODO: change this to use a propper logger
@@ -63,16 +43,4 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     }
 
     Ok(())
-}
-
-// TODO: move plugins
-use serde::{Deserialize, Serialize};
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(deny_unknown_fields)]
-// TODO: maybe bad name...
-pub struct PluginDefinition {
-    name: String,
-    executable: String,
-    #[serde(default)]
-    when: Vec<String>, // TODO: maybe proper conditions later?
 }

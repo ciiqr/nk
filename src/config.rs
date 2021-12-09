@@ -1,7 +1,6 @@
 use crate::args::Arguments;
-use std::{path::PathBuf, str::FromStr};
-
 use serde::{de::Error, Deserialize, Deserializer};
+use std::{path::PathBuf, str::FromStr};
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]

@@ -2,6 +2,7 @@ mod args;
 mod commands;
 mod config;
 mod extensions;
+mod plugins;
 mod state;
 mod traits;
 mod utils;
