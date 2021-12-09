@@ -8,6 +8,7 @@ pub struct Config {
     pub machine: String,
     #[serde(deserialize_with = "expand_paths")]
     pub sources: Vec<PathBuf>,
+    // TODO: maybe move plugin config to sources if current setup is too limiting
     pub plugins: Vec<ConfigPlugin>,
 }
 

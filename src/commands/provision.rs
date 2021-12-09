@@ -15,10 +15,6 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // TODO: initialize base vars (machine, roles, ?sources)
 
     // TODO: filter based on "when:" conditions (files[].groups[].when)
-    // TODO: load plugins
-    // TODO: call setup command on all plugins to determine how to interface with them? maybe only once required?
-    // TODO: maybe move plugin config to sources... likely with "when:" conditions OR:
-    // TODO: maybe NEED a "plugin.yml" to add basic "when:" conditions
 
     // TODO: match states to plugins
 
