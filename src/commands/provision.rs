@@ -24,7 +24,11 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         println!("plugin_definition: {:?}", plugin.definition);
 
         // TODO: handle errors better
-        plugin.setup()?;
+        plugin.initialize()?;
+
+        // TODO: per-state?
+        // plugin.match(state)?;
+
         plugin.provision()?;
     }
 

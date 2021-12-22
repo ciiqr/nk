@@ -48,8 +48,8 @@ impl Plugin {
 
     // TODO: maybe this is part of Plugin creation process? or is implicitly run once something runs that needs it?
     // - maybe it can be run in from_config?
-    pub fn setup(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let child = self.execute(["setup"])?;
+    pub fn initialize(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let child = self.execute(["initialize"])?;
 
         // TODO: handle errors smoother
         let output = child.wait_with_output()?;
