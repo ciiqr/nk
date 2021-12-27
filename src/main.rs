@@ -21,10 +21,10 @@ fn main() {
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
     let arguments = parse_args()?;
-    let config = Config::new(&arguments)?;
+    let config = Config::new(&arguments);
 
     match arguments.subcommand {
-        Subcommand::Provision { args } => provision(args, config),
+        Subcommand::Provision { args } => provision(args, config?),
         Subcommand::Help => help(),
         Subcommand::Version => version(),
     }
