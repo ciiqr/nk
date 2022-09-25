@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+set -e
+
+cargo clippy --quiet
+rustfmt src/**/*.rs src/*.rs --check

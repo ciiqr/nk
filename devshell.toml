@@ -1,0 +1,20 @@
+# https://numtide.github.io/devshell
+[devshell]
+motd = ""
+packages = [
+    # nix
+    "nixpkgs-fmt",
+
+    # rust
+    "rustup",
+]
+
+# TODO: may want to check if these things are setup first... (or find some other way to make them quiet)
+[devshell.startup.rust]
+text = """
+rustup default stable
+rustup component add rust-src
+"""
+
+[devshell.startup.git-hooks]
+text = "git config --local core.hookspath .hooks"
