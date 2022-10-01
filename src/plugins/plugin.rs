@@ -4,22 +4,28 @@ use crate::{
     state::Condition,
 };
 use serde::{Deserialize, Serialize};
+use serde_with::{serde_as, OneOrMany};
 use std::{
     ffi::OsStr,
     path::PathBuf,
     process::{Command, Stdio},
 };
 
+#[serde_as]
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 // TODO: maybe bad name...
 pub struct PluginDefinition {
     name: String,
     executable: String,
+
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
     #[serde(default)]
     when: Vec<Condition>,
+    // TODO: will likely have a priority system (ie. so files are created first, then programs are installed, then everything else?)
 }
 
+#[derive(Debug)]
 pub struct Plugin {
     // TODO: maybe rename, represents the plugin on disk, currently same thing
     // as plugin source, but could be different if we add remote plugins that
@@ -37,7 +43,10 @@ impl Plugin {
 
         let definition = {
             let plugin_yml = path.join("plugin.yml");
-            PluginDefinition::from_yaml_file(&plugin_yml)?
+            match PluginDefinition::from_yaml_file(&plugin_yml) {
+                Ok(val) => Ok(val),
+                Err(e) => Err(format!("{}: {}", e, plugin_yml.display())),
+            }?
         };
 
         Ok(Plugin {
@@ -46,13 +55,12 @@ impl Plugin {
         })
     }
 
-    // TODO: maybe this is part of Plugin creation process? or is implicitly run once something runs that needs it?
-    // - maybe it can be run in from_config?
-    pub fn initialize(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let child = self.execute(["initialize"])?;
+    pub fn bootstrap(&self) -> Result<(), Box<dyn std::error::Error>> {
+        let child = self.execute(["bootstrap"])?;
 
         // TODO: handle errors smoother
         let output = child.wait_with_output()?;
+        // TODO: need a proper error
         assert!(output.status.success());
 
         // TODO: print stdout/stderr? as applicable

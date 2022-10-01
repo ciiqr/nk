@@ -5,7 +5,7 @@ use std::{path::PathBuf, str::FromStr};
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    pub machine: String,
+    pub machine: Option<String>,
     #[serde(deserialize_with = "expand_paths")]
     pub sources: Vec<PathBuf>,
     // TODO: maybe move plugin config to sources if current setup is too limiting
@@ -14,13 +14,19 @@ pub struct Config {
 
 impl Config {
     pub fn new(arguments: &Arguments) -> Result<Config, Box<dyn std::error::Error>> {
-        let contents = std::fs::read_to_string(
-            arguments
-                .global
-                .config
-                .as_ref()
-                .unwrap_or(&PathBuf::from_str(&shellexpand::tilde("~/.nk.yml"))?),
-        )?;
+        // TODO: provide a better error when config file doesn't exist
+        let local_path = &PathBuf::from_str(&shellexpand::tilde(".nk.yml"))?;
+        let path = arguments
+            .global
+            .config
+            .as_ref()
+            // TODO: .nk.yml OR ~/.nk.yml? (or merge both?)
+            .unwrap_or(local_path);
+        // let contents = std::fs::read_to_string(path)?; // TODO
+        let contents = match std::fs::read_to_string(path) {
+            Ok(val) => Ok(val),
+            Err(e) => Err(format!("{}: {}", e, path.display())),
+        }?;
 
         Ok(serde_yaml::from_str(&contents)?)
     }
@@ -57,17 +63,14 @@ impl<'de> Deserialize<'de> for PluginSource {
     }
 }
 
-// TODO: move?
 fn expand_paths<'de, D>(deserializer: D) -> Result<Vec<PathBuf>, D::Error>
 where
     D: Deserializer<'de>,
 {
     let paths: Vec<String> = Deserialize::deserialize(deserializer)?;
-    Ok(paths
+    paths
         .iter()
         .map(|s| PathBuf::from_str(&shellexpand::tilde(&s)).map_err(D::Error::custom))
-        // TODO: need to handle errors properly
-        .filter(|res| res.is_ok())
-        .map(|res| res.unwrap())
-        .collect())
+        // TODO: maybe consider partitioning and showing all the errors instead...
+        .collect::<Result<Vec<_>, _>>()
 }

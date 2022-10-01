@@ -22,12 +22,20 @@ impl Machine {
     }
 
     pub fn get_current(config: &Config) -> Result<Machine, Box<dyn std::error::Error>> {
-        let machines = find_machines(&config.sources)?;
+        let machines = load_machines(&config.sources)?;
+
+        let hostname = sys_info::hostname()?;
+        let machine = config.machine.to_owned().unwrap_or(hostname);
 
         Ok(machines
             .into_iter()
-            .find(|m| m.name == config.machine)
-            .ok_or("Current machine not found")?)
+            .find(|m| m.name == machine)
+            .unwrap_or(Machine {
+                name: machine,
+                roles: vec![],
+            }))
+        // TODO: consider if we should have a way to enforce a known machine
+        // .ok_or("Current machine not found")?)
     }
 }
 
@@ -41,7 +49,7 @@ fn find_machine_files(sources: &[PathBuf]) -> Vec<PathBuf> {
         .collect()
 }
 
-fn find_machines(sources: &[PathBuf]) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
+fn load_machines(sources: &[PathBuf]) -> Result<Vec<Machine>, Box<dyn std::error::Error>> {
     let mut machine_names = HashSet::new();
     let mut machines = vec![];
 

@@ -1,17 +1,17 @@
 # nk
+
 configuration management for humans
 
 ## setup
 
-- `~/.nk.yml`
-```
-machine: laptop-william
+-   `./.nk.yml` OR `~/.nk.yml`
+
+```yaml
 sources:
-  # TODO: remove /nk once we're fully migrated over?
-  - ~/Projects/config/nk
-  - ~/Projects/config-private/nk
+    - ~/Projects/config
+    - ~/Projects/config-private
 plugins:
-  - ~/Projects/nk-plugin-pacman
+    - ~/Projects/nk-plugin-files
 ```
 
-- `cargo run`
+-   `cargo run`
