@@ -16,3 +16,4 @@ regex = "1.6.0"
 lazy_static = "1.4.0"
 sys-info = "0.9.1"
 serde_with = "2.0.1"
+rhai = { version = "1.10.1", features = ["no_closure", "no_custom_syntax"] }
