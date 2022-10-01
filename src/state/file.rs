@@ -1,6 +1,5 @@
 use super::{Group, Role};
-use lazy_static::lazy_static;
-use regex::Regex;
+use serde::Deserialize;
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -9,17 +8,13 @@ pub struct File {
     pub groups: Vec<Group>,
 }
 
-lazy_static! {
-    static ref DOCUMENT_SEPERATOR: Regex = Regex::new(r"(?m)^---$").unwrap();
-}
-
 impl File {
     pub fn from_path(path: PathBuf) -> Result<File, Box<dyn std::error::Error>> {
         let contents = std::fs::read_to_string(&path)?;
-        let groups = DOCUMENT_SEPERATOR
-            .split(&contents)
-            .map(serde_yaml::from_str)
-            // TODO: maybe consider partitioning and showing all the errors instead...
+
+        let groups = serde_yaml::Deserializer::from_str(&contents)
+            .into_iter()
+            .map(Group::deserialize)
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(File { path, groups })
