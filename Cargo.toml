@@ -6,13 +6,13 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pico-args = "0.4.2"
-const_format = "0.2.22"
-indoc = "1.0.3"
-shellexpand = "2.1.0"
-serde = { version = "1.0.130", features = ["derive"] }
-serde_yaml = "0.8.21"
-regex = "1.5.4"
+pico-args = "0.5.0"
+const_format = "0.2.26"
+indoc = "1.0.7"
+shellexpand = "2.1.2"
+serde = { version = "1.0.145", features = ["derive"] }
+serde_yaml = "0.9.13"
+regex = "1.6.0"
 lazy_static = "1.4.0"
 sys-info = "0.9.1"
 serde_with = "2.0.1"
