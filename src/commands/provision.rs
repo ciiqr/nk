@@ -24,7 +24,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // find all state files for this machine
     let files = state::File::find_all(&config.sources, &roles)?;
 
-    // filter groups based on "when:" conditions (files[].groups[].when)
+    // filter groups based on conditions
     let groups = evaluator.filter_files_to_matching_groups(&files)?;
 
     // TODO: merge all filtered files into into single resolved state
