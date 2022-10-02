@@ -13,7 +13,9 @@ impl Evaluator {
         let mut global_scope = Scope::new();
         global_scope.push_constant("machine", machine.name.clone());
         global_scope.push_constant("roles", machine.roles.clone());
-        global_scope.push_constant("platform", "TODO: implement");
+        global_scope.push_constant("os", std::env::consts::OS);
+        global_scope.push_constant("family", std::env::consts::FAMILY);
+        global_scope.push_constant("arch", std::env::consts::ARCH);
 
         // setup engine
         let mut engine = Engine::new();

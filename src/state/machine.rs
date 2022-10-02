@@ -24,8 +24,11 @@ impl Machine {
     pub fn get_current(config: &Config) -> Result<Machine, Box<dyn std::error::Error>> {
         let machines = load_machines(&config.sources)?;
 
-        let hostname = sys_info::hostname()?;
-        let machine = config.machine.to_owned().unwrap_or(hostname);
+        let hostname = hostname::get()?;
+        let machine = config
+            .machine
+            .to_owned()
+            .unwrap_or_else(|| hostname.to_string_lossy().into());
 
         Ok(machines
             .into_iter()
