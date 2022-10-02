@@ -1,4 +1,4 @@
-use crate::{config::Config, plugins::Plugin, state};
+use crate::{config::Config, eval::Evaluator, plugins::Plugin, state};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -18,12 +18,14 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let machine = state::Machine::get_current(&config)?;
     let roles = state::Role::find_by_names(&machine.roles, &config.sources);
 
-    // TODO: initialize base vars (machine, roles, platform, etc.)
+    // initialize base vars & evaluator (machine, roles, platform, etc.)
+    let evaluator = Evaluator::new(&machine);
 
     // find all state files for this machine
     let files = state::File::find_all(&config.sources, &roles)?;
 
-    // TODO: filter files based on "when:" conditions (files[].groups[].when)
+    // filter groups based on "when:" conditions (files[].groups[].when)
+    let groups = evaluator.filter_files_to_matching_groups(&files)?;
 
     // TODO: merge all filtered files into into single resolved state
 
@@ -39,6 +41,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     println!("plugins: {:#?}", plugins);
     println!("{:#?}", machine);
     println!("files: {:#?}", files);
+    println!("groups: {:#?}", groups);
 
     // bootstrap
     for plugin in &plugins {
@@ -50,7 +53,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // provision
     for plugin in &plugins {
         // TODO: only provision plugins that matched (with the states that matched)
-        // TODO: handle errors better
+        // TODO: keep all results & partition at the end
         plugin.provision()?;
     }
 

@@ -1,6 +1,7 @@
 mod args;
 mod commands;
 mod config;
+mod eval;
 mod extensions;
 mod plugins;
 mod state;

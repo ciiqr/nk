@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
 use std::{
     ffi::OsStr,
+    io::Write,
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -56,6 +57,7 @@ impl Plugin {
     }
 
     pub fn bootstrap(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // TODO: consider an option to make bootstrapping optional (ie. an "implements" key in the plugin yaml with the subcommands it's implemented...)
         let child = self.execute(["bootstrap"])?;
 
         // TODO: handle errors smoother
@@ -72,8 +74,18 @@ impl Plugin {
     }
 
     // TODO: pass in states
+    // TODO: forward to plugin through stdin
     pub fn provision(&self) -> Result<(), Box<dyn std::error::Error>> {
-        let child = self.execute(["provision", "--state", "example state"])?;
+        let mut child = self.execute(["provision"])?;
+
+        // write state
+        {
+            let child_stdin = child
+                .stdin
+                .as_mut()
+                .ok_or("couldn't connect to plugin stdin")?;
+            child_stdin.write_all("Hello, world!\n".to_string().as_bytes())?;
+        }
 
         // TODO: handle errors smoother
         let output = child.wait_with_output()?;
@@ -96,6 +108,7 @@ impl Plugin {
 
         Command::new(plugin_executable)
             .args(args)
+            .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
