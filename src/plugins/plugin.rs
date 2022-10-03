@@ -13,20 +13,20 @@ use std::{
 };
 
 #[serde_as]
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 // TODO: maybe bad name...
 pub struct PluginDefinition {
-    name: String,
-    executable: String,
+    pub name: String,
+    pub executable: String,
 
     #[serde_as(deserialize_as = "OneOrMany<_>")]
     #[serde(default)]
-    when: Vec<Condition>,
+    pub when: Vec<Condition>,
     // TODO: will likely have a priority system (ie. so files are created first, then programs are installed, then everything else?)
 }
 
-#[derive(Debug)]
+#[derive(Debug, Hash, Clone, PartialEq, Eq)]
 pub struct Plugin {
     // TODO: maybe rename, represents the plugin on disk, currently same thing
     // as plugin source, but could be different if we add remote plugins that

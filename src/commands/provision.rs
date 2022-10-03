@@ -15,6 +15,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         .iter()
         .map(Plugin::from_config)
         .collect::<Result<Vec<_>, _>>()?;
+    println!("plugins: {:#?}", plugins);
 
     // determine machine/role information
     let machine = state::Machine::get_current(&config)?;
@@ -40,29 +41,27 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
 
     // TODO: ? once we need it, apply custom vars from resolved state
 
-    // TODO: match each state to a plugin (group states by their matching plugin)
-    // plugin.match(state)?;
+    // match each state to a plugin (group states by their matching plugin)
+    let execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
 
     // TODO: change this to use a propper logger
     println!("TODO: implement provision:");
     println!("{:?}", args);
     println!("{:#?}", config);
-    println!("plugins: {:#?}", plugins);
     println!("{:#?}", machine);
     println!("files: {:#?}", files);
     println!("groups: {:#?}", groups);
     println!("resolved: {:#?}", resolved);
+    println!("execution_sets: {:#?}", execution_sets);
 
     // bootstrap
-    for plugin in &plugins {
-        // TODO: only bootstrap plugins that matched
+    for (plugin, values) in &execution_sets {
         // TODO: handle errors better
         plugin.bootstrap()?;
     }
 
     // provision
-    for plugin in &plugins {
-        // TODO: only provision plugins that matched (with the states that matched)
+    for (plugin, values) in &execution_sets {
         // TODO: keep all results & partition at the end
         plugin.provision()?;
     }
