@@ -1,5 +1,7 @@
+use std::collections::HashMap;
+
 use super::{Condition, Declaration, RawDeclaration};
-use crate::utils::deserialize_map_to_vec_of_named;
+use crate::utils::deserialize_map_to_map_of_named;
 use serde::Deserialize;
 use serde_with::{serde_as, OneOrMany};
 
@@ -12,7 +14,7 @@ pub struct Group {
     // TODO: vars (once they're actually useful)
     #[serde(
         flatten,
-        deserialize_with = "deserialize_map_to_vec_of_named::<RawDeclaration, _, _>"
+        deserialize_with = "deserialize_map_to_map_of_named::<RawDeclaration, _, _>"
     )]
-    pub declarations: Vec<Declaration>,
+    pub declarations: HashMap<String, Declaration>,
 }

@@ -1,4 +1,6 @@
-use crate::{config::Config, eval::Evaluator, plugins::Plugin, state};
+use std::collections::HashMap;
+
+use crate::{config::Config, eval::Evaluator, merge::merge_groups, plugins::Plugin, state};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -27,7 +29,14 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // filter groups based on conditions
     let groups = evaluator.filter_files_to_matching_groups(&files)?;
 
-    // TODO: merge all filtered files into into single resolved state
+    // merge all groups into into single resolved state
+    let resolved = groups.iter().fold(
+        state::Group {
+            when: vec![],
+            declarations: HashMap::new(),
+        },
+        merge_groups,
+    );
 
     // TODO: ? once we need it, apply custom vars from resolved state
 
@@ -42,6 +51,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     println!("{:#?}", machine);
     println!("files: {:#?}", files);
     println!("groups: {:#?}", groups);
+    println!("resolved: {:#?}", resolved);
 
     // bootstrap
     for plugin in &plugins {

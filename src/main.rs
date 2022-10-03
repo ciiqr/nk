@@ -3,6 +3,7 @@ mod commands;
 mod config;
 mod eval;
 mod extensions;
+mod merge;
 mod plugins;
 mod state;
 mod traits;
