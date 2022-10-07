@@ -21,7 +21,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         .iter()
         .map(Plugin::from_config)
         .collect::<Result<Vec<_>, _>>()?;
-    println!("plugins: {:#?}", plugins);
+    // println!("plugins: {:#?}", plugins);
 
     // determine machine/role information
     let machine = state::Machine::get_current(&config)?;
@@ -51,14 +51,14 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
 
     // TODO: change this to use a propper logger
-    println!("TODO: implement provision:");
-    println!("{:?}", args);
-    println!("{:#?}", config);
-    println!("{:#?}", machine);
-    println!("files: {:#?}", files);
-    println!("groups: {:#?}", groups);
-    println!("resolved: {:#?}", resolved);
-    println!("execution_sets: {:#?}", execution_sets);
+    // println!("TODO: implement provision:");
+    // println!("{:?}", args);
+    // println!("{:#?}", config);
+    // println!("{:#?}", machine);
+    // println!("files: {:#?}", files);
+    // println!("groups: {:#?}", groups);
+    // println!("resolved: {:#?}", resolved);
+    // println!("execution_sets: {:#?}", execution_sets);
 
     // TODO: decide how I'm going to provide helpers to plugins
     // TODO: maybe just download jq (and possibly other utilities) and inject it into the path before running plugins...

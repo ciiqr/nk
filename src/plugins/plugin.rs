@@ -80,7 +80,7 @@ impl Plugin {
         _args: &ProvisionArgs, // TODO: should maybe have it's own set of args?
         states: &Vec<Value>,
     ) -> Result<
-        impl Iterator<Item = Result<ProvisionStateOutput, serde_yaml::Error>> + 'a,
+        impl Iterator<Item = Result<ProvisionStateOutput, serde_json::Error>> + 'a,
         Box<dyn std::error::Error>,
     > {
         // TODO: need to pass in args.dry_run somehow
@@ -88,7 +88,7 @@ impl Plugin {
 
         // write states & close
         {
-            // TODO: decide if we want to send a single blob, or one state per line...
+            // TODO: change to one state per line...
             let states_json = serde_json::to_string(states)?;
 
             let mut child_stdin = child
@@ -103,12 +103,9 @@ impl Plugin {
             .take()
             .ok_or("couldn't connect to plugin stdout")?;
 
-        // TODO: want to be able to read & transform stdout & return it out as a stream
         // TODO: include plugin information in iterator?
         // TODO: do something with stderr (include in iterator & log in error states?)
-        Ok(serde_yaml::Deserializer::from_reader(stdout)
-            .into_iter()
-            .map(ProvisionStateOutput::deserialize))
+        Ok(serde_json::Deserializer::from_reader(stdout).into_iter::<ProvisionStateOutput>())
     }
 
     fn execute<I, S>(&self, args: I) -> std::io::Result<std::process::Child>
@@ -141,6 +138,7 @@ pub struct ProvisionStateOutput {
 }
 
 #[derive(Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
 pub enum ProvisionStateStatus {
     Failed,
     Success,
