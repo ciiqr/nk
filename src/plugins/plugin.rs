@@ -1,10 +1,12 @@
 use crate::{
+    commands::ProvisionArgs,
     config::{ConfigPlugin, PluginSource},
     extensions::SerdeDeserializeFromYamlPath,
     state::Condition,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
+use serde_yaml::Value;
 use std::{
     ffi::OsStr,
     io::Write,
@@ -73,30 +75,40 @@ impl Plugin {
     //     Ok(())
     // }
 
-    // TODO: pass in states
-    // TODO: forward to plugin through stdin
-    pub fn provision(&self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn provision<'a>(
+        &self,
+        _args: &ProvisionArgs, // TODO: should maybe have it's own set of args?
+        states: &Vec<Value>,
+    ) -> Result<
+        impl Iterator<Item = Result<ProvisionStateOutput, serde_yaml::Error>> + 'a,
+        Box<dyn std::error::Error>,
+    > {
+        // TODO: need to pass in args.dry_run somehow
         let mut child = self.execute(["provision"])?;
 
-        // write state
+        // write states & close
         {
-            let child_stdin = child
+            // TODO: decide if we want to send a single blob, or one state per line...
+            let states_json = serde_json::to_string(states)?;
+
+            let mut child_stdin = child
                 .stdin
-                .as_mut()
+                .take()
                 .ok_or("couldn't connect to plugin stdin")?;
-            child_stdin.write_all("Hello, world!\n".to_string().as_bytes())?;
+            child_stdin.write_all(states_json.as_bytes())?;
         }
 
-        // TODO: handle errors smoother
-        let output = child.wait_with_output()?;
-        assert!(output.status.success());
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or("couldn't connect to plugin stdout")?;
 
-        // TODO: print stdout/stderr? as applicable
-        // let mut me = output.stdout.as_mut().unwrap();
-        println!("output: {:#?}", output);
-        // println!("stdout: {:?}", String::from_utf8(output.stdout));
-
-        Ok(())
+        // TODO: want to be able to read & transform stdout & return it out as a stream
+        // TODO: include plugin information in iterator?
+        // TODO: do something with stderr (include in iterator & log in error states?)
+        Ok(serde_yaml::Deserializer::from_reader(stdout)
+            .into_iter()
+            .map(ProvisionStateOutput::deserialize))
     }
 
     fn execute<I, S>(&self, args: I) -> std::io::Result<std::process::Child>
@@ -117,4 +129,19 @@ impl Plugin {
     fn get_executable_path(&self) -> PathBuf {
         self.path.join(&self.definition.executable)
     }
+}
+
+// TODO: move
+#[derive(Deserialize, Debug, Clone)]
+pub struct ProvisionStateOutput {
+    pub status: ProvisionStateStatus,
+    pub changed: bool,
+    pub description: String,
+    pub output: String,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub enum ProvisionStateStatus {
+    Failed,
+    Success,
 }

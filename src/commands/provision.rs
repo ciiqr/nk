@@ -1,6 +1,12 @@
 use std::collections::HashMap;
 
-use crate::{config::Config, eval::Evaluator, merge::merge_groups, plugins::Plugin, state};
+use crate::{
+    config::Config,
+    eval::Evaluator,
+    merge::merge_groups,
+    plugins::{Plugin, ProvisionStateStatus},
+    state,
+};
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -54,6 +60,9 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     println!("resolved: {:#?}", resolved);
     println!("execution_sets: {:#?}", execution_sets);
 
+    // TODO: decide how I'm going to provide helpers to plugins
+    // TODO: maybe just download jq (and possibly other utilities) and inject it into the path before running plugins...
+
     // // bootstrap
     // for (plugin, values) in &execution_sets {
     //     // TODO: handle errors better
@@ -61,12 +70,64 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // }
 
     // provision
-    for (plugin, values) in &execution_sets {
-        // TODO: keep all results & partition at the end
-        plugin.provision()?;
-    }
+    let provision_results = execution_sets //
+        .iter() //
+        .map(|(p, v)| match p.provision(&args, v) {
+            Ok(i) => {
+                Ok(i.map(|r| match r {
+                    Ok(o) => {
+                        // provisioning a single result
+                        // TODO: format: "[x!] {plugin}: {description}"
+                        match (o.status, o.changed) {
+                            // TODO: GREEN
+                            (ProvisionStateStatus::Success, false) => {
+                                // TODO: make this a cli flag
+                                let show_unchanged = true;
+                                if show_unchanged {
+                                    println!("x {}", o.description);
+                                };
 
-    // TODO: check provisioning status of all states, exit based on results
+                                Ok(())
+                            }
+                            // TODO: GREEN
+                            (ProvisionStateStatus::Success, true) => {
+                                println!("x {}", o.description);
+                                Ok(())
+                            }
+                            // TODO: RED
+                            (ProvisionStateStatus::Failed, _) => {
+                                println!("! {}", o.description);
+                                Err("provisioning failed".to_string()) // TODO: idk about this message...
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        // provisioning a single result failed, ie. maybe just output parsing error
+                        // TODO: decide format...
+                        println!("{}", e);
+                        Err(e.to_string())
+                    }
+                })
+                .collect::<Vec<Result<_, _>>>())
+            }
+            Err(e) => {
+                // provisioning as a whole failed for this plugin
+                // TODO: decide format...
+                println!("{}", e);
+                Err(e)
+                // Ok()
+                // vec![Err(e)]
+            }
+        })
+        .collect::<Result<Vec<_>, _>>();
+
+    // TODO: ugh...
+    if provision_results
+        .iter()
+        .any(|pr| pr.iter().any(|r| r.iter().any(|r| r.is_err())))
+    {
+        Err("provisioning failed...")?
+    }
 
     Ok(())
 }

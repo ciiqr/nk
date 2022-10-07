@@ -294,6 +294,7 @@ dependencies = [
  "regex",
  "rhai",
  "serde",
+ "serde_json",
  "serde_with",
  "serde_yaml",
  "shellexpand",
