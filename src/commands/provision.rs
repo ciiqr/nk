@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::{
     config::Config,
     eval::Evaluator,
@@ -7,6 +5,8 @@ use crate::{
     plugins::{Plugin, ProvisionStateStatus},
     state,
 };
+use console::style;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -70,33 +70,31 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // }
 
     // provision
-    let provision_results = execution_sets //
-        .iter() //
+    let provision_results = execution_sets
+        .iter()
         .map(|(p, v)| match p.provision(&args, v) {
             Ok(i) => {
                 Ok(i.map(|r| match r {
                     Ok(o) => {
                         // provisioning a single result
                         // TODO: format: "[x!] {plugin}: {description}"
+                        // TODO: include "output" indented for failed results
                         match (o.status, o.changed) {
-                            // TODO: GREEN
                             (ProvisionStateStatus::Success, false) => {
                                 // TODO: make this a cli flag
                                 let show_unchanged = true;
                                 if show_unchanged {
-                                    println!("x {}", o.description);
+                                    println!("{}", style(format!("x {}", o.description)).green());
                                 };
 
                                 Ok(())
                             }
-                            // TODO: GREEN
                             (ProvisionStateStatus::Success, true) => {
-                                println!("x {}", o.description);
+                                println!("{}", style(format!("x {}", o.description)).green());
                                 Ok(())
                             }
-                            // TODO: RED
                             (ProvisionStateStatus::Failed, _) => {
-                                println!("! {}", o.description);
+                                println!("{}", style(format!("! {}", o.description)).red());
                                 Err("provisioning failed".to_string()) // TODO: idk about this message...
                             }
                         }
@@ -120,6 +118,8 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
             }
         })
         .collect::<Result<Vec<_>, _>>();
+
+    // TODO: list unmatched states
 
     // TODO: ugh...
     if provision_results
