@@ -4,6 +4,7 @@ const USAGE: &str = indoc::indoc! {"
       nk p|provision [--dry-run] [--show-unchanged]
       nk h|help
       nk v|version
+      nk plugin bash
 
     global:
       -h|--help            Display this help message.

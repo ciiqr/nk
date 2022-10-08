@@ -10,7 +10,7 @@ mod traits;
 mod utils;
 
 use args::{parse_args, Subcommand};
-use commands::{help, provision, version};
+use commands::{help, plugin, provision, version};
 use config::Config;
 use std::process::exit;
 
@@ -27,6 +27,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     match arguments.subcommand {
         Subcommand::Provision { args } => provision(args, config?),
+        Subcommand::Plugin { args } => plugin(args),
         Subcommand::Help => help(),
         Subcommand::Version => version(),
     }

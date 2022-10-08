@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use crate::{
-    commands::ProvisionArgs,
+    commands::{PluginArgs, PluginSubcommand, ProvisionArgs},
     extensions::{PicoArgsExt, VecOsStringToStringExt},
 };
 
@@ -18,6 +18,7 @@ pub struct GlobalArguments {
 
 pub enum Subcommand {
     Provision { args: ProvisionArgs },
+    Plugin { args: PluginArgs },
     Help,
     Version,
 }
@@ -68,6 +69,14 @@ fn parse_subcommand(
             args: ProvisionArgs {
                 dry_run: pargs.contains_any("--dry-run"),
                 show_unchanged: pargs.contains_any("--show-unchanged"),
+            },
+        }),
+        Some("plugin") => Ok(Subcommand::Plugin {
+            args: PluginArgs {
+                subcommand: (match pargs.free_from_str::<String>() {
+                    Ok(_) => Ok(PluginSubcommand::Bash), // NOTE: just assume for now
+                    Err(e) => Err(e),
+                })?,
             },
         }),
         Some("h" | "help") => Ok(Subcommand::Help),
