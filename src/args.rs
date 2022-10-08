@@ -67,6 +67,7 @@ fn parse_subcommand(
         Some("p" | "provision") => Ok(Subcommand::Provision {
             args: ProvisionArgs {
                 dry_run: pargs.contains_any("--dry-run"),
+                show_unchanged: pargs.contains_any("--show-unchanged"),
             },
         }),
         Some("h" | "help") => Ok(Subcommand::Help),

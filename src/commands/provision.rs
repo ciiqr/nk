@@ -11,6 +11,7 @@ use std::collections::HashMap;
 #[derive(Debug)]
 pub struct ProvisionArgs {
     pub dry_run: bool,
+    pub show_unchanged: bool,
 }
 
 // TODO: wrap most errors in our own, more user friendly error
@@ -81,9 +82,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
                         // TODO: include "output" indented for failed results
                         match (o.status, o.changed) {
                             (ProvisionStateStatus::Success, false) => {
-                                // TODO: make this a cli flag
-                                let show_unchanged = true;
-                                if show_unchanged {
+                                if args.show_unchanged {
                                     println!("{}", style(format!("x {}", o.description)).green());
                                 };
 
