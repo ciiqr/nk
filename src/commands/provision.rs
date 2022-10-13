@@ -7,6 +7,7 @@ use crate::{
 };
 use console::style;
 use std::collections::HashMap;
+use textwrap::indent;
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
@@ -61,9 +62,6 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // println!("resolved: {:#?}", resolved);
     // println!("execution_sets: {:#?}", execution_sets);
 
-    // TODO: decide how I'm going to provide helpers to plugins
-    // TODO: maybe just download jq (and possibly other utilities) and inject it into the path before running plugins...
-
     // // bootstrap
     // for (plugin, values) in &execution_sets {
     //     // TODO: handle errors better
@@ -89,11 +87,14 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
                                 Ok(())
                             }
                             (ProvisionStateStatus::Success, true) => {
+                                // TODO: changed/unchanged should probably have different prefix but same colour?
                                 println!("{}", style(format!("x {}", o.description)).green());
                                 Ok(())
                             }
                             (ProvisionStateStatus::Failed, _) => {
                                 println!("{}", style(format!("! {}", o.description)).red());
+                                // TODO: can we get the terminal tab size?
+                                println!("{}", indent(o.output.as_str(), "    "));
                                 Err("provisioning failed".to_string()) // TODO: idk about this message...
                             }
                         }

@@ -36,6 +36,7 @@ nk::log_result() {
     declare changed="$2"
     declare description="$3"
     declare output="$4"
+    # TODO: should probably keep manual summaries (ie. at least for one off error checks like a package not existing)
 
     jq \
         --null-input \
@@ -50,4 +51,21 @@ nk::log_result() {
             "description": $description,
             "output": $output
         }'
+}
+
+nk::array::contains() {
+    if [[ "$#" == '0' ]]; then
+        echo 'usage: nk::array::contains <element> <array>...' >&2
+        echo "   ie. nk::array::contains \"\$program\" \"\${programs[@]}\"" >&2
+        return 1
+    fi
+
+    declare value="$1"
+    for element in "${@:2}"; do
+        if [[ "$element" == "$value" ]]; then
+            return 0
+        fi
+    done
+
+    return 1
 }
