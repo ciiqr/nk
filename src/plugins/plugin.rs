@@ -58,23 +58,6 @@ impl Plugin {
         })
     }
 
-    // pub fn bootstrap(&self) -> Result<(), Box<dyn std::error::Error>> {
-    //     // TODO: consider an option to make bootstrapping optional (ie. an "implements" key in the plugin yaml with the subcommands it's implemented...)
-    //     let child = self.execute(["bootstrap"])?;
-
-    //     // TODO: handle errors smoother
-    //     let output = child.wait_with_output()?;
-    //     // TODO: need a proper error
-    //     assert!(output.status.success());
-
-    //     // TODO: print stdout/stderr? as applicable
-    //     // let mut me = output.stdout.as_mut().unwrap();
-    //     println!("output: {:#?}", output);
-    //     // println!("stdout: {:?}", String::from_utf8(output.stdout));
-
-    //     Ok(())
-    // }
-
     pub fn provision<'a>(
         &self,
         _args: &ProvisionArgs, // TODO: should maybe have it's own set of args?

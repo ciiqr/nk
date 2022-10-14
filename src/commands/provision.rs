@@ -62,12 +62,6 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // println!("resolved: {:#?}", resolved);
     // println!("execution_sets: {:#?}", execution_sets);
 
-    // // bootstrap
-    // for (plugin, values) in &execution_sets {
-    //     // TODO: handle errors better
-    //     plugin.bootstrap()?;
-    // }
-
     // provision
     let provision_results = execution_sets
         .iter()
