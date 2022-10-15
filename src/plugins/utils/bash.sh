@@ -10,7 +10,11 @@ nk::run_for_output() {
 
     # create temp output file
     declare __nk_tmp_output
-    __nk_tmp_output=$(mktemp)
+    __nk_tmp_output=$(mktemp) || {
+        declare __nk_return_value="$?"
+        echo 'nk::run_for_output failed to create temporary file'
+        return "$__nk_return_value"
+    }
 
     # run
     declare __nk_return_value='0'
