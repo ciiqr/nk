@@ -21,11 +21,22 @@ use std::{
 pub struct PluginDefinition {
     pub name: String,
     pub executable: String,
+    pub provision: PluginProvisionDefinition, // TODO: likely this will be optional (once we support var plugins...)
 
     #[serde_as(deserialize_as = "OneOrMany<_>")]
     #[serde(default)]
     pub when: Vec<Condition>,
     // TODO: will likely have a priority system (ie. so files are created first, then programs are installed, then everything else?)
+}
+
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+// TODO: maybe bad name...
+pub struct PluginProvisionDefinition {
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
+    #[serde(default)]
+    pub when: Vec<Condition>,
 }
 
 #[derive(Debug, Hash, Clone, PartialEq, Eq)]

@@ -78,6 +78,25 @@ impl Evaluator {
             .collect()
     }
 
+    pub fn filter_plugins(
+        &self,
+        plugins: Vec<Plugin>,
+    ) -> Result<Vec<Plugin>, Box<dyn std::error::Error>> {
+        let mut filtered_plugins = Vec::new();
+
+        for plugin in plugins {
+            match self.eval_conditions(&plugin.definition.when, &mut Scope::new()) {
+                Ok(true) => {
+                    filtered_plugins.push(plugin);
+                }
+                Err(e) => Err(e)?,
+                _ => (),
+            }
+        }
+
+        Ok(filtered_plugins)
+    }
+
     pub fn match_states_to_plugins(
         &self,
         declarations: &HashMap<String, state::Declaration>,
@@ -95,7 +114,7 @@ impl Evaluator {
                 // TODO: clean up this code
                 let mut matching_plugin = None;
                 for plugin in &plugins {
-                    match self.eval_conditions(&plugin.definition.when, &mut scope) {
+                    match self.eval_conditions(&plugin.definition.provision.when, &mut scope) {
                         Ok(true) => {
                             matching_plugin = Some(plugin);
                             break;
@@ -111,8 +130,8 @@ impl Evaluator {
                         execution_sets.insert(plugin.clone(), vec![state]);
                     }
                 } else {
-                    // TODO: decide what to do if no plugins match, at least log
-                    // println!("unmatched: {}: {:?}", declaration.name, state);
+                    // TODO: would prefer to handle the logging for this in provision
+                    println!("unmatched: {}: {:?}", declaration.name, state);
                 }
             }
         }

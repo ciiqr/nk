@@ -17,20 +17,24 @@ pub struct ProvisionArgs {
 
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
-    // load plugins
-    let plugins = config
-        .plugins
-        .iter()
-        .map(Plugin::from_config)
-        .collect::<Result<Vec<_>, _>>()?;
-    // println!("plugins: {:#?}", plugins);
-
     // determine machine/role information
     let machine = state::Machine::get_current(&config)?;
     let roles = state::Role::find_by_names(&machine.roles, &config.sources);
 
     // initialize base vars & evaluator (machine, roles, platform, etc.)
     let evaluator = Evaluator::new(&machine);
+
+    // load plugins
+    let all_plugins = config
+        .plugins
+        .iter()
+        .map(Plugin::from_config)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // filter plugins for os
+    let plugins = evaluator.filter_plugins(all_plugins)?;
+
+    // println!("plugins: {:#?}", plugins);
 
     // find all state files for this machine
     let files = state::File::find_all(&config.sources, &roles)?;
