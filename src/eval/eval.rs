@@ -40,7 +40,10 @@ impl Evaluator {
     ) -> Result<bool, Box<dyn std::error::Error>> {
         let results = conditions
             .iter()
-            .map(|c| self.engine.eval_with_scope::<bool>(scope, &c.rule))
+            .map(|c| {
+                self.engine
+                    .eval_expression_with_scope::<bool>(scope, &c.rule)
+            })
             .collect::<Result<Vec<bool>, _>>()?;
 
         Ok(results.iter().all(|r| *r))
