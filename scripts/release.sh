@@ -27,5 +27,8 @@ fi
 # TODO: download remote builds
 
 # TODO: create release
-# TODO: attach binaries with -a nk-macos-arm64 -a nk-windows etc.
-# hub release create -m "$VERSION" "$VERSION"
+# hub release create \
+#     -a 'nk-macos-aarch64' \
+#     -a 'nk-linux-x86_64' \
+#     -a 'nk-windows-x86_64.exe' \
+#     -m "$VERSION" "$VERSION"

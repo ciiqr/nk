@@ -1,0 +1,12 @@
+name: validate
+on: push
+jobs:
+  validate:
+    name: Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Lint
+        run: cargo clippy --quiet
+      - name: Style Check
+        run: rustfmt src/**/*.rs src/*.rs --check
