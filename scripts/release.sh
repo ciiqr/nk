@@ -14,6 +14,9 @@ git fetch --tags
 # get existing version
 declare existing_version
 existing_version="$(git tag -l --sort=-v:refname | head -1)"
+if [[ -z "$existing_version" ]]; then
+    existing_version='0.0.0'
+fi
 
 # bump to new version
 declare version
