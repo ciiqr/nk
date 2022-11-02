@@ -8,6 +8,18 @@ if [[ "$OSTYPE" != darwin* || "$(uname -m)" != 'arm64' ]]; then
     exit 1
 fi
 
+# create temp dir
+declare temp_dir
+temp_dir="$(mktemp -d)"
+on_exit() {
+    rm -r "$temp_dir"
+}
+trap on_exit EXIT
+
+# create assets dir
+declare assets_dir="${temp_dir}/assets"
+mkdir "$assets_dir"
+
 # make sure git tags are up to date
 echo '==> update tags'
 git fetch --tags
@@ -65,9 +77,13 @@ fi
 rm -rf ./target/release/nk-{linux,windows}*
 
 # download remote builds
-# TODO: maybe download to a temp dir instead?
 echo '==> download build artifacts'
-gh run download "$runId" --dir './target/release'
+gh run download "$runId" --dir "$temp_dir"
+
+# move binaries to assets directory
+mv './target/release/nk' "${assets_dir}/nk-macos-aarch64"
+mv "${temp_dir}/nk-linux-x86_64/nk" "${assets_dir}/nk-linux-x86_64"
+mv "${temp_dir}/nk-windows-x86_64.exe/nk.exe" "${assets_dir}/nk-windows-x86_64.exe"
 
 # create release
 echo '==> create release'
@@ -75,6 +91,4 @@ gh release create \
     --title "$tag" \
     --notes '' \
     "$tag" \
-    './target/release/nk#nk-macos-aarch64' \
-    './target/release/nk-linux-x86_64/nk#nk-linux-x86_64' \
-    './target/release/nk-windows-x86_64.exe/nk.exe#nk-windows-x86_64.exe'
+    "${assets_dir}/"*
