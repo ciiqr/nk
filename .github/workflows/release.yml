@@ -6,82 +6,28 @@ on:
 jobs:
   release:
     name: Release
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      # TODO: once all builds are working and we know there the binaries are built to
-      # - name: Lint
-      #   run: cargo clippy --quiet
-      # - name: Style Check
-      #   run: rustfmt src/**/*.rs src/*.rs --check
-      # - name: Install Cargo Edit
-      #   run: cargo install cargo-edit
-      # - name: Determine New Version
-      #   id: version
-      #   uses: zwaldowski/semver-release-action@v2
-      #   with:
-      #     dry_run: true
-      #     bump: minor
-      #     github_token: ${{ secrets.GITHUB_TOKEN }}
-      # - name: Set Env
-      #   env:
-      #     VERSION: v${{ steps.version.outputs.version }}
-      #   run: echo "VERSION=${VERSION}" >> $GITHUB_ENV
-      # - name: Update Version In Code
-      #   env:
-      #     GIT_AUTHOR_EMAIL: ${{ event.repository.owner.email }}
-      #     GIT_AUTHOR_NAME: ${{ github.repository_owner }}
-      #     GIT_COMMITTER_EMAIL: ${{ event.repository.owner.email }}
-      #     GIT_COMMITTER_NAME: ${{ github.repository_owner }}
-      #   run: |
-      #     cargo set-version "$VERSION"
-
-      #     git add Cargo.toml Cargo.lock
-      #     git commit -m "bumped version to ${VERSION}"
-      #     git tag "$VERSION"
-      #     git push origin "$VERSION"
-      # # aarch64-apple-darwin
-      # - uses: actions-rs/toolchain@v1
-      #   with:
-      #     toolchain: stable
-      #     target: aarch64-apple-darwin
-      #     override: true
-      # - uses: actions-rs/cargo@v1
-      #   with:
-      #     use-cross: true
-      #     command: build
-      #     args: --target aarch64-apple-darwin
-      # x86_64-unknown-linux-gnu
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-unknown-linux-gnu
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --target x86_64-unknown-linux-gnu
-      # x86_64-pc-windows-msvc
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          target: x86_64-pc-windows-msvc
-          override: true
-      - uses: actions-rs/cargo@v1
-        with:
-          use-cross: true
-          command: build
-          args: --target x86_64-pc-windows-msvc
+      # TODO: maybe split these back out, we likely don't need them to run on every os
+      - name: Lint
+        run: cargo clippy --quiet
+      - name: Style Check
+        run: rustfmt src/**/*.rs src/*.rs --check
+      - name: Build
+        run: cargo build --release
       # TODO: remove
       - name: TEMP DEBUG
         run: |
           find . -type f
-      # TODO: once all builds are working and we know there the binaries are built to
-      # # release
-      # - name: Create Release
-      #   env:
-      #     GITHUB_USER: ${{ github.repository_owner }}
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      #   # TODO: attach binaries with -a nk-macos-arm64 -a nk-windows etc.
-      #   run: hub release create -m "$VERSION" "$VERSION"
+      # TODO: since we can't compile macos arm yet, we'll have to attach this as an artifact, download, and create the release locally
+      # - name: Upload binary
+      #   uses: actions/upload-artifact@v1
+      #   with:
+      #     name: nk
+      #     # path: # TODO: path to binary
