@@ -62,8 +62,8 @@ declare conclusion
 declare runId
 while [[ -z "$conclusion" ]]; do
     output="$(gh run list -w .github/workflows/build.yml --branch "$tag" --json 'status,conclusion,databaseId' --jq '.[] | select(.status == "completed")' | head -1)"
-    conclusion="$(jq -r '.conclusion' <<< "$output")"
-    runId="$(jq -r '.databaseId' <<< "$output")"
+    conclusion="$(jq -r '.conclusion' <<<"$output")"
+    runId="$(jq -r '.databaseId' <<<"$output")"
 
     sleep 1
 done
