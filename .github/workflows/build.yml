@@ -10,9 +10,11 @@ jobs:
       matrix:
         build:
           - os: ubuntu-latest
-            bin: nk-linux-x86_64
+            path: target/release/nk
+            artifact: nk-linux-x86_64
           - os: windows-latest
-            bin: nk-windows-x86_64.exe
+            path: target/release/nk.exe
+            artifact: nk-windows-x86_64.exe
     runs-on: ${{ matrix.build.os }}
     steps:
       - name: Wait for validate job to finish
@@ -26,11 +28,8 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build
         run: cargo build --release
-      # TODO: remove
-      - name: DEBUG
-        run: ls target/release
       - name: Upload binary
         uses: actions/upload-artifact@v1
         with:
-          name: ${{ matrix.build.bin }}
-          path: target/release/nk
+          name: ${{ matrix.build.artifact }}
+          path: ${{ matrix.build.path }}
