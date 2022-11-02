@@ -28,7 +28,7 @@ jobs:
         run: cargo build --release
       # TODO: remove
       - name: DEBUG
-        run: find target/release -type f
+        run: ls target/release
       - name: Upload binary
         uses: actions/upload-artifact@v1
         with:
