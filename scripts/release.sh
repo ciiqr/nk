@@ -67,12 +67,13 @@ rm -rf ./target/release/nk-{linux,windows}*
 # download remote builds
 # TODO: maybe download to a temp dir instead?
 echo '==> download build artifacts'
-gh run download "3375321544" --dir './target/release'
+gh run download "$runId" --dir './target/release'
 
 # create release
 echo '==> create release'
 gh release create \
     --title "$tag" \
+    --notes '' \
     "$tag" \
     './target/release/nk#nk-macos-aarch64' \
     './target/release/nk-linux-x86_64/nk#nk-linux-x86_64' \
