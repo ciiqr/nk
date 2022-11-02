@@ -1,8 +1,8 @@
 name: build
 on:
   push:
-    branches:
-      - main
+    tags:
+      - v*
 jobs:
   build:
     name: Build
@@ -17,14 +17,6 @@ jobs:
             artifact: nk-windows-x86_64.exe
     runs-on: ${{ matrix.build.os }}
     steps:
-      - name: Wait for validate job to finish
-        uses: lewagon/wait-on-check-action@v1.2.0
-        with:
-          check-name: Validate
-          ref: ${{ github.ref }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-        # TODO: ugh, why is this broken?
-        if: ${{ matrix.build.os != 'windows-latest' }}
       - uses: actions/checkout@v3
       - name: Build
         run: cargo build --release

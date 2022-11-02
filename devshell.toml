@@ -4,9 +4,12 @@ motd = ""
 packages = [
     # nix
     "nixpkgs-fmt",
-
     # rust
     "rustup",
+    # release
+    "gh",
+    "semver-tool",
+    "jq",
 ]
 
 # TODO: may want to check if these things are setup first... (or find some other way to make them quiet)
