@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ matrix.build.os }}
     steps:
       - name: Wait for validate job to finish
-        uses: lewagon/wait-on-check-action@v1.1.1
+        uses: lewagon/wait-on-check-action@v1.2.0
         with:
           check-name: Validate
           ref: ${{ github.ref }}
