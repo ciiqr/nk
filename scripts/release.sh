@@ -36,6 +36,8 @@ git commit -m "bumped version to ${version}"
 declare tag="v${version}"
 git tag "$tag"
 git push origin "$tag"
+# TODO: can we drop this commit?
+# TODO: if we're doing that, probs also want to check for a dirty root
 
 # build macos arm
 echo '==> build macos arm'
