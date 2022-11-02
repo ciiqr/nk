@@ -40,6 +40,7 @@ version="$(semver bump minor "$existing_version")"
 # update version in code
 echo '==> set version in code'
 cargo set-version "$version"
+cargo generate-lockfile
 
 # commit & tag
 echo '==> commit & tag'
