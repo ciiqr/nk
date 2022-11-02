@@ -47,9 +47,8 @@ git add Cargo.toml Cargo.lock
 git commit -m "bumped version to ${version}"
 declare tag="v${version}"
 git tag "$tag"
+git push
 git push origin "$tag"
-# TODO: can we drop this commit?
-# TODO: if we're doing that, probs also want to check for a dirty root
 
 # build macos arm
 echo '==> build macos arm'
@@ -72,9 +71,6 @@ if [[ "$conclusion" != 'success' ]]; then
     echo "remote builds failed: ${output}"
     exit 1
 fi
-
-# delete old builds
-rm -rf ./target/release/nk-{linux,windows}*
 
 # download remote builds
 echo '==> download build artifacts'
