@@ -21,7 +21,7 @@ jobs:
       - name: Build
         run: cargo build --release
       - name: Upload binary
-      - uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.build.artifact }}
           path: ${{ matrix.build.path }}

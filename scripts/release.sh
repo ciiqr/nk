@@ -9,9 +9,11 @@ if [[ "$OSTYPE" != darwin* || "$(uname -m)" != 'arm64' ]]; then
 fi
 
 # make sure git tags are up to date
+echo '==> update tags'
 git fetch --tags
 
 # get existing version
+echo '==> get existing version'
 declare existing_version
 existing_version="$(git tag -l --sort=-v:refname | head -1)"
 if [[ -z "$existing_version" ]]; then
@@ -19,13 +21,16 @@ if [[ -z "$existing_version" ]]; then
 fi
 
 # bump to new version
+echo '==> bump version'
 declare version
 version="$(semver bump minor "$existing_version")"
 
 # update version in code
+echo '==> set version in code'
 cargo set-version "$version"
 
 # commit & tag
+echo '==> commit & tag'
 git add Cargo.toml Cargo.lock
 git commit -m "bumped version to ${version}"
 declare tag="v${version}"
@@ -33,9 +38,11 @@ git tag "$tag"
 git push origin "$tag"
 
 # build macos arm
+echo '==> build macos arm'
 cargo build --release
 
 # TODO: wait for remote windows/linux builds
+echo '==> wait for remote builds'
 declare output
 declare conclusion
 declare runId
@@ -47,9 +54,11 @@ done
 
 # download remote builds
 # TODO: maybe download to a temp dir instead?
+echo '==> download build artifacts'
 gh run download "$runId" --dir './target/release'
 
 # create release
+echo '==> create release'
 gh release create \
     --title "$tag" \
     "$tag" \
