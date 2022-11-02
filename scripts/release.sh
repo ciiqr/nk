@@ -41,21 +41,31 @@ git push origin "$tag"
 echo '==> build macos arm'
 cargo build --release
 
-# TODO: wait for remote windows/linux builds
+# wait for remote windows/linux builds
 echo '==> wait for remote builds'
 declare output
 declare conclusion
 declare runId
-while [[ -n "$conclusion" ]]; do
+while [[ -z "$conclusion" ]]; do
     output="$(gh run list -w .github/workflows/build.yml --branch "$tag" --json 'status,conclusion,databaseId' --jq '.[] | select(.status == "completed")' | head -1)"
     conclusion="$(jq '.conclusion' <<< "$output")"
     runId="$(jq '.databaseId' <<< "$output")"
+
+    sleep 1
 done
+
+if [[ "$conclusion" != 'success' ]]; then
+    echo "remote builds failed: ${output}"
+    exit 1
+fi
+
+# delete old builds
+rm -rf ./target/release/nk-{linux,windows}*
 
 # download remote builds
 # TODO: maybe download to a temp dir instead?
 echo '==> download build artifacts'
-gh run download "$runId" --dir './target/release'
+gh run download "3375321544" --dir './target/release'
 
 # create release
 echo '==> create release'
@@ -63,5 +73,5 @@ gh release create \
     --title "$tag" \
     "$tag" \
     './target/release/nk#nk-macos-aarch64' \
-    './target/release/nk-linux-x86_64#nk-linux-x86_64' \
+    './target/release/nk-linux-x86_64/nk#nk-linux-x86_64' \
     './target/release/nk-windows-x86_64.exe/nk.exe#nk-windows-x86_64.exe'
