@@ -21,6 +21,8 @@ jobs:
           check-name: Validate
           ref: ${{ github.ref }}
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+        # TODO: ugh, why is this broken?
+        if: ${{ matrix.build.os == 'windows-latest' }}
       - uses: actions/checkout@v2
       - name: Build
         run: cargo build --release
