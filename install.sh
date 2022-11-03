@@ -42,14 +42,15 @@ os="$(nk::install::identify_os)"
 declare arch
 arch="$(nk::install::identify_arch)"
 
+# paths
 declare bin_directory="${HOME}/.nk/bin"
 declare nk_path="${bin_directory}/nk"
-# declare jq_path="${bin_directory}/jq"
+declare jq_path="${bin_directory}/jq"
 
 # create bin directory
 mkdir -p "$bin_directory"
 
-# determine download url
+# determine nk url
 declare nk_url
 if [[ "$version" == 'latest' ]]; then
     nk_url="https://github.com/ciiqr/nk/releases/latest/download/nk-${os}-${arch}"
@@ -58,15 +59,30 @@ else
 fi
 
 # download nk binary
-echo curl -fsSL "$nk_url" -o "$nk_path"
+curl -fsSL "$nk_url" -o "$nk_path"
 
 # make nk executable
 chmod +x "$nk_path"
 
-# TODO: download jq binary
-# TODO: consider moving this into nk itself (or making helper stuff like this a plugin variant)
-# curl -fsSL "https://github.com/ciiqr/nk/releases/latest/download/nk-${os}-${arch}" -o "$nk_path"
-# TODO: download official binary if available, else we'll need to provide our own build for macos-arm64: https://gist.github.com/magnetikonline/58eb344e724d878345adc8622f72be13
+# derermine jq url
+declare jq_url
+if [[ "$os" == 'macos' && "$arch" == 'aarch64' ]]; then
+    jq_url='https://github.com/ciiqr/jq-macos-arm/releases/latest/download/jq'
+else
+    declare jq_binary
+    if [[ "$os" == 'linux' && "$arch" == 'x86_64' ]]; then
+        jq_binary='jq-linux64'
+    elif [[ "$os" == 'macos' && "$arch" == 'x86_64' ]]; then
+        jq_binary='jq-osx-amd64'
+    else
+        echo "unrecognized os/arch: ${os}/${arch}"
+        exit 1
+    fi
+    jq_url="https://github.com/stedolan/jq/releases/download/jq-1.6/${jq_binary}"
+fi
+
+# download jq binary
+curl -fsSL "$jq_url" -o "$jq_path"
 
 # make jq executable
-# chmod +x "$jq_path"
+chmod +x "$jq_path"
