@@ -1,6 +1,6 @@
 # nk
 
-configuration management for humans
+config focused configuration management
 
 ## setup
 
@@ -43,3 +43,8 @@ configuration management for humans
     ```bash
     nk provision
     ```
+
+## resources
+
+-   plugins: [ciiqr/nk-plugins](https://github.com/ciiqr/nk-plugins)
+-   example config: [ciiqr/dotfiles](https://github.com/ciiqr/dotfiles)
