@@ -34,6 +34,8 @@ nk::install::identify_arch() {
 # TODO: need optional parameter: --version 'v0.4.0' (default to latest)
 declare version='latest'
 
+echo '==> identifying os/arch'
+
 # determine os
 declare os
 os="$(nk::install::identify_os)"
@@ -50,6 +52,8 @@ declare jq_path="${bin_directory}/jq"
 # create bin directory
 mkdir -p "$bin_directory"
 
+echo '==> download nk'
+
 # determine nk url
 declare nk_url
 if [[ "$version" == 'latest' ]]; then
@@ -63,6 +67,8 @@ curl -fsSL "$nk_url" -o "$nk_path"
 
 # make nk executable
 chmod +x "$nk_path"
+
+echo '==> download jq'
 
 # derermine jq url
 declare jq_url
