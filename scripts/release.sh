@@ -79,6 +79,7 @@ gh run download "$runId" --dir "$temp_dir"
 
 # move binaries to assets directory
 mv './target/release/nk' "${assets_dir}/nk-macos-aarch64"
+mv "${temp_dir}/nk-macos-x86_64/nk" "${assets_dir}/nk-macos-x86_64"
 mv "${temp_dir}/nk-linux-x86_64/nk" "${assets_dir}/nk-linux-x86_64"
 mv "${temp_dir}/nk-windows-x86_64.exe/nk.exe" "${assets_dir}/nk-windows-x86_64.exe"
 

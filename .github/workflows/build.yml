@@ -9,6 +9,9 @@ jobs:
     strategy:
       matrix:
         build:
+          - os: macos-latest
+            path: target/release/nk
+            artifact: nk-macos-x86_64
           - os: ubuntu-latest
             path: target/release/nk
             artifact: nk-linux-x86_64
