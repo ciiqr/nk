@@ -73,3 +73,8 @@ nk::array::contains() {
 
     return 1
 }
+
+nk::error() {
+    echo "$1"
+    echo "${@:2}" >&2
+}
