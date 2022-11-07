@@ -38,15 +38,18 @@ impl Evaluator {
         conditions: &[Condition],
         scope: &mut Scope,
     ) -> Result<bool, Box<dyn std::error::Error>> {
-        let results = conditions
-            .iter()
-            .map(|c| {
-                self.engine
-                    .eval_expression_with_scope::<bool>(scope, &c.rule)
-            })
-            .collect::<Result<Vec<bool>, _>>()?;
+        for condition in conditions {
+            let condition_matches = self
+                .engine
+                .eval_expression_with_scope::<bool>(scope, &condition.rule)?;
 
-        Ok(results.iter().all(|r| *r))
+            // if any conditions don't match, return early
+            if !condition_matches {
+                return Ok(false);
+            }
+        }
+
+        Ok(true)
     }
 
     pub fn filter_files_to_matching_groups(
@@ -108,8 +111,7 @@ impl Evaluator {
             for state in declaration.states.clone() {
                 let mut scope = Scope::new();
                 scope.push_constant("declaration", declaration.name.clone());
-                // TODO: this doesn't quite work because we can't access fields on state...
-                // scope.push_constant("state", state.clone());
+                scope.push_constant_dynamic("state", rhai::serde::to_dynamic(state.clone())?);
 
                 // TODO: clean up this code
                 let mut matching_plugin = None;
