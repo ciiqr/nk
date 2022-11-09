@@ -3,10 +3,9 @@ use crate::{
     eval::Evaluator,
     merge::merge_groups,
     plugins::{Plugin, ProvisionStateStatus},
-    state,
+    state::{self, ResolvedGroup},
 };
 use console::style;
-use std::collections::HashMap;
 use textwrap::indent;
 
 #[derive(Debug)]
@@ -43,13 +42,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let groups = evaluator.filter_files_to_matching_groups(&files)?;
 
     // merge all groups into into single resolved state
-    let resolved = groups.iter().fold(
-        state::Group {
-            when: vec![],
-            declarations: HashMap::new(),
-        },
-        merge_groups,
-    );
+    let resolved = groups.into_iter().fold(ResolvedGroup::new(), merge_groups);
 
     // TODO: ? once we need it, apply custom vars from resolved state
 

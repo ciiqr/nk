@@ -1,28 +1,48 @@
-use crate::state;
+use serde_yaml::Value;
 
-pub fn merge_groups(a: state::Group, b: &state::Group) -> state::Group {
-    let mut declarations = a.declarations;
-    for (k, mut v) in b.declarations.clone() {
-        let declaration = match declarations.remove(&k) {
-            Some(d) => merge_declarations(d, &mut v),
+use crate::state::{self, ResolvedGroup};
+
+pub fn merge_groups(mut a: ResolvedGroup, b: state::Group) -> ResolvedGroup {
+    for (k, v) in b.declarations {
+        let declaration = match a.declarations.remove(&k) {
+            Some(d) => merge_declarations(d, v),
             None => v,
         };
 
-        declarations.insert(k, declaration);
+        a.declarations.insert(k, declaration);
     }
 
-    state::Group {
-        // TODO: a little dumb since we're using groups here still... maybe introduce new type that excludes "when"
-        when: vec![],
-        declarations,
+    for (k, v) in b.vars {
+        let var = match a.vars.remove(&k) {
+            Some(d) => merge_values(d, v),
+            None => v,
+        };
+
+        a.vars.insert(k, var);
     }
+
+    a
 }
 
-fn merge_declarations(mut a: state::Declaration, b: &mut state::Declaration) -> state::Declaration {
+fn merge_declarations(mut a: state::Declaration, mut b: state::Declaration) -> state::Declaration {
     a.states.append(&mut b.states);
+    a
+}
 
-    state::Declaration {
-        name: b.name.clone(),
-        states: a.states,
+fn merge_values(a: Value, b: Value) -> Value {
+    match (a, b) {
+        (Value::Mapping(mut a), Value::Mapping(b)) => {
+            for (k, v) in b {
+                let var = match a.remove(&k) {
+                    Some(d) => merge_values(d, v),
+                    None => v,
+                };
+
+                a.insert(k, var);
+            }
+            Value::Mapping(a)
+        }
+        // TODO: decide how we want to handle lists...
+        (_, b) => b,
     }
 }
