@@ -22,20 +22,22 @@ config focused configuration management
 
     <!-- TODO: need remote plugins to make this at all reasonable without more steps here -->
 
+    <!-- prettier-ignore -->
     ```yaml
     sources:
-        - .
+      - .
     plugins:
-        - ../nk-plugins/brew
+      - ../nk-plugins/brew
     ```
 
 -   Create state config ie. `config.yml` (any `*.yml` except dotfiles `.*.yml`)
 
+    <!-- prettier-ignore -->
     ```yaml
     when: os == "macos"
 
     packages:
-        - homebrew/cask/google-chrome
+      - homebrew/cask/google-chrome
     ```
 
 -   Provision state
