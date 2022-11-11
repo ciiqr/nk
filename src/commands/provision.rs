@@ -5,6 +5,7 @@ use crate::{
     plugins::{Plugin, ProvisionStateStatus},
     render::render_group,
     state::{self, ResolvedGroup},
+    vars::get_builtin_vars,
 };
 use console::style;
 use textwrap::indent;
@@ -21,8 +22,11 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let machine = state::Machine::get_current(&config)?;
     let roles = state::Role::find_by_names(&machine.roles, &config.sources);
 
-    // initialize base vars & evaluator (machine, roles, platform, etc.)
-    let evaluator = Evaluator::new(&machine);
+    // initialize builtin vars
+    let builtin_vars = get_builtin_vars(&machine)?;
+
+    // initialize evaluator (machine, roles, platform, etc.)
+    let evaluator = Evaluator::new(builtin_vars.clone());
 
     // load plugins
     let all_plugins = config
@@ -44,7 +48,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let resolved = groups.into_iter().fold(ResolvedGroup::new(), merge_groups);
 
     // render resolved
-    let rendered = render_group(&machine, resolved)?;
+    let rendered = render_group(builtin_vars, resolved)?;
 
     // match each state to a plugin (group states by their matching plugin)
     let execution_sets = evaluator.match_states_to_plugins(&rendered.declarations, plugins)?;

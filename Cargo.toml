@@ -26,3 +26,4 @@ textwrap = "0.15.1"
 handlebars = "4.3.5"
 whoami = "1.2.3"
 home = "0.5.4"
+os_info = { version = "3.5.1", default-features = false }

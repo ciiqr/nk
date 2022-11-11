@@ -1,12 +1,10 @@
-use std::collections::HashMap;
-
-use home::home_dir;
-use rhai::{Engine, Scope};
-
 use crate::{
     plugins::Plugin,
-    state::{self, Condition, Machine},
+    state::{self, Condition},
 };
+use rhai::{Engine, Scope};
+use serde_yaml::Value;
+use std::collections::HashMap;
 
 pub struct Evaluator {
     engine: Engine,
@@ -14,25 +12,20 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
-    pub fn new(machine: &Machine) -> Self {
+    pub fn new(vars: HashMap<String, Value>) -> Self {
         // TODO: consider how I want to handle this stuff (maybe make lazy, maybe include in Evaluator with Rc?)
-        // TODO: share values with render.rs
         let mut global_scope = Scope::new();
-        global_scope.push_constant("machine", machine.name.clone());
-        global_scope.push_constant("roles", machine.roles.clone());
-        global_scope.push_constant("os", std::env::consts::OS);
-        global_scope.push_constant("family", std::env::consts::FAMILY);
-        global_scope.push_constant("arch", std::env::consts::ARCH);
-        global_scope.push_constant("user", whoami::username());
-        global_scope.push_constant(
-            "home",
-            home_dir()
-                .ok_or(String::from("couldn't get home dir"))
-                .unwrap() // TODO: need to fix
-                .as_os_str()
-                .to_string_lossy()
-                .into_owned(),
-        );
+        for (k, var) in vars {
+            match var {
+                Value::Null => global_scope.push_constant(k, ()),
+                Value::Bool(v) => global_scope.push_constant(k, v),
+                Value::Number(v) => global_scope.push_constant(k, v),
+                Value::String(v) => global_scope.push_constant(k, v),
+                Value::Sequence(v) => global_scope.push_constant(k, v),
+                Value::Mapping(v) => global_scope.push_constant(k, v),
+                Value::Tagged(v) => global_scope.push_constant(k, v),
+            };
+        }
 
         // setup engine
         let mut engine = Engine::new();

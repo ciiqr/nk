@@ -1,9 +1,8 @@
 use handlebars::{Handlebars, RenderError};
-use home::home_dir;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
-use crate::state::{Declaration, Machine, ResolvedGroup};
+use crate::state::{Declaration, ResolvedGroup};
 
 pub struct RenderedGroup {
     pub vars: Mapping,
@@ -28,37 +27,19 @@ impl<'reg> TemplatingEngine<'reg> {
     }
 }
 
-fn build_data(machine: &Machine, vars: Mapping) -> Result<Mapping, String> {
-    // TODO: share values with eval.rs
+fn build_data(builtin_vars: HashMap<String, Value>, vars: Mapping) -> Result<Mapping, String> {
     let mut data = Mapping::new();
-    data.insert(
-        Value::String("user".into()),
-        Value::String(whoami::username()),
-    );
-    data.insert(
-        Value::String("machine".into()),
-        Value::String(machine.name.clone()),
-    );
-    data.insert(
-        Value::String("home".into()),
-        Value::String(
-            home_dir()
-                .ok_or(String::from("couldn't get home dir"))?
-                .as_os_str()
-                .to_string_lossy()
-                .into_owned(),
-        ),
-    );
+    data.extend(builtin_vars.into_iter().map(|(k, v)| (Value::String(k), v)));
     data.extend(vars.into_iter());
 
     Ok(data)
 }
 
 pub fn render_group(
-    machine: &Machine,
+    builtin_vars: HashMap<String, Value>,
     group: ResolvedGroup,
 ) -> Result<RenderedGroup, Box<dyn std::error::Error>> {
-    let data = build_data(machine, group.vars.clone())?;
+    let data = build_data(builtin_vars, group.vars.clone())?;
     let engine = TemplatingEngine::new(data);
 
     let declarations = group

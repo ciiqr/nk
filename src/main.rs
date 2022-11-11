@@ -9,6 +9,7 @@ mod render;
 mod state;
 mod traits;
 mod utils;
+mod vars;
 
 use args::{parse_args, Subcommand};
 use commands::{help, plugin, provision, version};
