@@ -1,4 +1,5 @@
 use handlebars::{Handlebars, RenderError};
+use home::home_dir;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
@@ -27,7 +28,7 @@ impl<'reg> TemplatingEngine<'reg> {
     }
 }
 
-fn build_data(machine: &Machine, vars: Mapping) -> Mapping {
+fn build_data(machine: &Machine, vars: Mapping) -> Result<Mapping, String> {
     // TODO: share values with eval.rs
     let mut data = Mapping::new();
     data.insert(
@@ -38,16 +39,26 @@ fn build_data(machine: &Machine, vars: Mapping) -> Mapping {
         Value::String("machine".into()),
         Value::String(machine.name.clone()),
     );
+    data.insert(
+        Value::String("home".into()),
+        Value::String(
+            home_dir()
+                .ok_or(String::from("couldn't get home dir"))?
+                .as_os_str()
+                .to_string_lossy()
+                .into_owned(),
+        ),
+    );
     data.extend(vars.into_iter());
 
-    data
+    Ok(data)
 }
 
 pub fn render_group(
     machine: &Machine,
     group: ResolvedGroup,
 ) -> Result<RenderedGroup, Box<dyn std::error::Error>> {
-    let data = build_data(machine, group.vars.clone());
+    let data = build_data(machine, group.vars.clone())?;
     let engine = TemplatingEngine::new(data);
 
     let declarations = group

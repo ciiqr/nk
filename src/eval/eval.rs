@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use home::home_dir;
 use rhai::{Engine, Scope};
 
 use crate::{
@@ -23,6 +24,15 @@ impl Evaluator {
         global_scope.push_constant("family", std::env::consts::FAMILY);
         global_scope.push_constant("arch", std::env::consts::ARCH);
         global_scope.push_constant("user", whoami::username());
+        global_scope.push_constant(
+            "home",
+            home_dir()
+                .ok_or(String::from("couldn't get home dir"))
+                .unwrap() // TODO: need to fix
+                .as_os_str()
+                .to_string_lossy()
+                .into_owned(),
+        );
 
         // setup engine
         let mut engine = Engine::new();
