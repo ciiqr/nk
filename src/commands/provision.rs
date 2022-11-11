@@ -3,6 +3,7 @@ use crate::{
     eval::Evaluator,
     merge::merge_groups,
     plugins::{Plugin, ProvisionStateStatus},
+    render::render_group,
     state::{self, ResolvedGroup},
 };
 use console::style;
@@ -33,8 +34,6 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // filter plugins for os
     let plugins = evaluator.filter_plugins(all_plugins)?;
 
-    // println!("plugins: {:#?}", plugins);
-
     // find all state files for this machine
     let files = state::File::find_all(&config.sources, &roles)?;
 
@@ -44,20 +43,11 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // merge all groups into into single resolved state
     let resolved = groups.into_iter().fold(ResolvedGroup::new(), merge_groups);
 
-    // TODO: ? once we need it, apply custom vars from resolved state
+    // render resolved
+    let rendered = render_group(resolved)?;
 
     // match each state to a plugin (group states by their matching plugin)
-    let execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
-
-    // TODO: change this to use a propper logger
-    // println!("TODO: implement provision:");
-    // println!("{:?}", args);
-    // println!("{:#?}", config);
-    // println!("{:#?}", machine);
-    // println!("files: {:#?}", files);
-    // println!("groups: {:#?}", groups);
-    // println!("resolved: {:#?}", resolved);
-    // println!("execution_sets: {:#?}", execution_sets);
+    let execution_sets = evaluator.match_states_to_plugins(&rendered.declarations, plugins)?;
 
     // provision
     let provision_results = execution_sets

@@ -5,6 +5,7 @@ mod eval;
 mod extensions;
 mod merge;
 mod plugins;
+mod render;
 mod state;
 mod traits;
 mod utils;

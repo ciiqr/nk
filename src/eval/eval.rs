@@ -15,12 +15,14 @@ pub struct Evaluator {
 impl Evaluator {
     pub fn new(machine: &Machine) -> Self {
         // TODO: consider how I want to handle this stuff (maybe make lazy, maybe include in Evaluator with Rc?)
+        // TODO: share values with render.rs
         let mut global_scope = Scope::new();
         global_scope.push_constant("machine", machine.name.clone());
         global_scope.push_constant("roles", machine.roles.clone());
         global_scope.push_constant("os", std::env::consts::OS);
         global_scope.push_constant("family", std::env::consts::FAMILY);
         global_scope.push_constant("arch", std::env::consts::ARCH);
+        global_scope.push_constant("user", whoami::username());
 
         // setup engine
         let mut engine = Engine::new();
