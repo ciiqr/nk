@@ -63,7 +63,7 @@ fn get_distro_var() -> Value {
         Type::Gentoo => "gentoo",
         Type::HardenedBSD => "hardenedbsd",
         Type::Illumos => "illumos",
-        Type::Linux => "z",
+        Type::Linux => "linux",
         Type::Macos => "macos",
         Type::Manjaro => "manjaro",
         Type::Mariner => "mariner",
