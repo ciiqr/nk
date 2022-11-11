@@ -2,7 +2,7 @@ use handlebars::{Handlebars, RenderError};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
-use crate::state::{Declaration, ResolvedGroup};
+use crate::state::{Declaration, Machine, ResolvedGroup};
 
 pub struct RenderedGroup {
     pub vars: Mapping,
@@ -16,10 +16,10 @@ struct TemplatingEngine<'reg> {
 
 impl<'reg> TemplatingEngine<'reg> {
     fn new(data: Mapping) -> Self {
-        Self {
-            registry: Handlebars::new(),
-            data,
-        }
+        let mut registry = Handlebars::new();
+        registry.set_strict_mode(true);
+
+        Self { registry, data }
     }
 
     fn render(&self, template: &str) -> Result<String, RenderError> {
@@ -27,20 +27,27 @@ impl<'reg> TemplatingEngine<'reg> {
     }
 }
 
-fn build_data(vars: Mapping) -> Mapping {
+fn build_data(machine: &Machine, vars: Mapping) -> Mapping {
     // TODO: share values with eval.rs
     let mut data = Mapping::new();
     data.insert(
         Value::String("user".into()),
         Value::String(whoami::username()),
     );
+    data.insert(
+        Value::String("machine".into()),
+        Value::String(machine.name.clone()),
+    );
     data.extend(vars.into_iter());
 
     data
 }
 
-pub fn render_group(group: ResolvedGroup) -> Result<RenderedGroup, Box<dyn std::error::Error>> {
-    let data = build_data(group.vars.clone());
+pub fn render_group(
+    machine: &Machine,
+    group: ResolvedGroup,
+) -> Result<RenderedGroup, Box<dyn std::error::Error>> {
+    let data = build_data(machine, group.vars.clone());
     let engine = TemplatingEngine::new(data);
 
     let declarations = group

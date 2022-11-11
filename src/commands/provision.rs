@@ -44,7 +44,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let resolved = groups.into_iter().fold(ResolvedGroup::new(), merge_groups);
 
     // render resolved
-    let rendered = render_group(resolved)?;
+    let rendered = render_group(&machine, resolved)?;
 
     // match each state to a plugin (group states by their matching plugin)
     let execution_sets = evaluator.match_states_to_plugins(&rendered.declarations, plugins)?;
