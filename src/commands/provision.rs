@@ -1,8 +1,8 @@
 use crate::{
     config::Config,
     eval::Evaluator,
-    merge::merge_groups,
-    plugins::{Plugin, ProvisionStateStatus},
+    merge::{merge_groups, merge_vars},
+    plugins::{Plugin, ProvisionInfo, ProvisionStateStatus},
     render::render_group,
     state::{self, ResolvedGroup},
     vars::get_builtin_vars,
@@ -48,15 +48,19 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let resolved = groups.into_iter().fold(ResolvedGroup::new(), merge_groups);
 
     // render resolved
-    let rendered = render_group(builtin_vars, resolved)?;
+    let rendered = render_group(builtin_vars.clone(), resolved)?;
 
     // match each state to a plugin (group states by their matching plugin)
     let execution_sets = evaluator.match_states_to_plugins(&rendered.declarations, plugins)?;
 
     // provision
+    let provision_info = ProvisionInfo {
+        sources: config.sources,
+        vars: merge_vars(builtin_vars, rendered.vars)?,
+    };
     let provision_results = execution_sets
         .iter()
-        .map(|(p, v)| match p.provision(&args, v) {
+        .map(|(p, v)| match p.provision(&provision_info, v) {
             Ok(i) => {
                 Ok(i.map(|r| match r {
                     Ok(o) => {

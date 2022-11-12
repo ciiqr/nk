@@ -1,12 +1,11 @@
 use crate::{
-    commands::ProvisionArgs,
     config::{ConfigPlugin, PluginSource},
     extensions::SerdeDeserializeFromYamlPath,
     state::Condition,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
-use serde_yaml::Value;
+use serde_yaml::{Mapping, Value};
 use std::{
     ffi::OsStr,
     io::Write,
@@ -71,14 +70,16 @@ impl Plugin {
 
     pub fn provision<'a>(
         &self,
-        _args: &ProvisionArgs, // TODO: should maybe have it's own set of args?
+        info: &ProvisionInfo,
         states: &Vec<Value>,
     ) -> Result<
         impl Iterator<Item = Result<ProvisionStateOutput, serde_json::Error>> + 'a,
         Box<dyn std::error::Error>,
     > {
+        let info_json = serde_json::to_string(info)?;
+
         // TODO: need to pass in args.dry_run somehow
-        let mut child = self.execute(["provision"])?;
+        let mut child = self.execute(["provision", info_json.as_str()])?;
 
         // write states & close
         {
@@ -136,4 +137,11 @@ pub struct ProvisionStateOutput {
 pub enum ProvisionStateStatus {
     Failed,
     Success,
+}
+
+#[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
+pub struct ProvisionInfo {
+    // TODO: if we're going to implement dry_run, pass it through here...
+    pub sources: Vec<PathBuf>,
+    pub vars: Mapping,
 }

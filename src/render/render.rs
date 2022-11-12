@@ -2,7 +2,10 @@ use handlebars::{Handlebars, RenderError};
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
-use crate::state::{Declaration, ResolvedGroup};
+use crate::{
+    merge::merge_vars,
+    state::{Declaration, ResolvedGroup},
+};
 
 pub struct RenderedGroup {
     pub vars: Mapping,
@@ -27,19 +30,11 @@ impl<'reg> TemplatingEngine<'reg> {
     }
 }
 
-fn build_data(builtin_vars: HashMap<String, Value>, vars: Mapping) -> Result<Mapping, String> {
-    let mut data = Mapping::new();
-    data.extend(builtin_vars.into_iter().map(|(k, v)| (Value::String(k), v)));
-    data.extend(vars.into_iter());
-
-    Ok(data)
-}
-
 pub fn render_group(
     builtin_vars: HashMap<String, Value>,
     group: ResolvedGroup,
 ) -> Result<RenderedGroup, Box<dyn std::error::Error>> {
-    let data = build_data(builtin_vars, group.vars.clone())?;
+    let data = merge_vars(builtin_vars, group.vars.clone())?;
     let engine = TemplatingEngine::new(data);
 
     let declarations = group
