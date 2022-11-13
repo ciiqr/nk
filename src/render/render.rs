@@ -7,11 +7,6 @@ use crate::{
     state::{Declaration, ResolvedGroup},
 };
 
-pub struct RenderedGroup {
-    pub vars: Mapping,
-    pub declarations: HashMap<String, Declaration>,
-}
-
 struct TemplatingEngine<'reg> {
     registry: Handlebars<'reg>,
     data: Mapping,
@@ -33,7 +28,7 @@ impl<'reg> TemplatingEngine<'reg> {
 pub fn render_group(
     builtin_vars: HashMap<String, Value>,
     group: ResolvedGroup,
-) -> Result<RenderedGroup, Box<dyn std::error::Error>> {
+) -> Result<ResolvedGroup, Box<dyn std::error::Error>> {
     let data = merge_vars(builtin_vars, group.vars.clone())?;
     let engine = TemplatingEngine::new(data);
 
@@ -43,7 +38,7 @@ pub fn render_group(
         .map(|(k, d)| Ok((k, render_declaration(&engine, d)?)))
         .collect::<Result<_, Box<dyn std::error::Error>>>()?;
 
-    Ok(RenderedGroup {
+    Ok(ResolvedGroup {
         vars: group.vars,
         declarations,
     })

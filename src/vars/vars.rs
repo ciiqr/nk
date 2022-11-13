@@ -3,24 +3,20 @@ use os_info::Type;
 use serde_yaml::Value;
 use std::collections::HashMap;
 
-use crate::state::Machine;
+use crate::{config::Config, state};
 
 pub fn get_builtin_vars(
-    machine: &Machine,
+    config: &Config,
 ) -> Result<HashMap<String, Value>, Box<dyn std::error::Error>> {
+    // determine machine/role information
+    let machine = state::Machine::get_current(config)?;
+
     let mut vars = HashMap::new();
 
     vars.insert("machine".into(), Value::String(machine.name.clone()));
     vars.insert(
         "roles".into(),
-        Value::Sequence(
-            machine
-                .roles
-                .clone()
-                .into_iter()
-                .map(Value::String)
-                .collect(),
-        ),
+        Value::Sequence(machine.roles.into_iter().map(Value::String).collect()),
     );
     vars.insert("os".into(), Value::String(std::env::consts::OS.into()));
     vars.insert(

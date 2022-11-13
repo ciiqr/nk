@@ -6,13 +6,14 @@ mod extensions;
 mod merge;
 mod plugins;
 mod render;
+mod resolve;
 mod state;
 mod traits;
 mod utils;
 mod vars;
 
 use args::{parse_args, Subcommand};
-use commands::{help, plugin, provision, version};
+use commands::{help, plugin, provision, resolve, version};
 use config::Config;
 use std::process::exit;
 
@@ -29,6 +30,7 @@ fn run() -> Result<(), Box<dyn std::error::Error>> {
 
     match arguments.subcommand {
         Subcommand::Provision { args } => provision(args, config?),
+        Subcommand::Resolve { args } => resolve(args, config?),
         Subcommand::Plugin { args } => plugin(args),
         Subcommand::Help => help(),
         Subcommand::Version => version(),

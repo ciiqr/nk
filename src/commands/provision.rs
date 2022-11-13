@@ -1,10 +1,9 @@
 use crate::{
     config::Config,
     eval::Evaluator,
-    merge::{merge_groups, merge_vars},
+    merge::merge_vars,
     plugins::{Plugin, ProvisionInfo, ProvisionStateStatus},
-    render::render_group,
-    state::{self, ResolvedGroup},
+    resolve::{resolve, ResolveOptions},
     vars::get_builtin_vars,
 };
 use console::style;
@@ -17,12 +16,8 @@ pub struct ProvisionArgs {
 
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
-    // determine machine/role information
-    let machine = state::Machine::get_current(&config)?;
-    let roles = state::Role::find_by_names(&machine.roles, &config.sources);
-
     // initialize builtin vars
-    let builtin_vars = get_builtin_vars(&machine)?;
+    let builtin_vars = get_builtin_vars(&config)?;
 
     // initialize evaluator (machine, roles, platform, etc.)
     let evaluator = Evaluator::new(builtin_vars.clone());
@@ -37,25 +32,21 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // filter plugins for os
     let plugins = evaluator.filter_plugins(all_plugins)?;
 
-    // find all state files for this machine
-    let files = state::File::find_all(&config.sources, &roles)?;
-
-    // filter groups based on conditions
-    let groups = evaluator.filter_files_to_matching_groups(&files)?;
-
-    // merge all groups into into single resolved state
-    let resolved = groups.into_iter().fold(ResolvedGroup::new(), merge_groups);
-
-    // render resolved
-    let rendered = render_group(builtin_vars.clone(), resolved)?;
+    // resolve state
+    let resolved = resolve(
+        &config,
+        &builtin_vars,
+        &evaluator,
+        ResolveOptions { render: true },
+    )?;
 
     // match each state to a plugin (group states by their matching plugin)
-    let execution_sets = evaluator.match_states_to_plugins(&rendered.declarations, plugins)?;
+    let execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
 
     // provision
     let provision_info = ProvisionInfo {
         sources: config.sources,
-        vars: merge_vars(builtin_vars, rendered.vars)?,
+        vars: merge_vars(builtin_vars, resolved.vars)?,
     };
     let provision_results = execution_sets
         .iter()

@@ -1,4 +1,4 @@
-use super::{Group, Role};
+use super::Group;
 use serde::Deserialize;
 use std::path::PathBuf;
 
@@ -23,7 +23,7 @@ impl File {
     fn find_all_in_dir(directory: &PathBuf) -> Result<Vec<File>, Box<dyn std::error::Error>> {
         let mut source_files: Vec<File> = vec![];
 
-        // TODO: may want to make sources optional? (def at least for roles, can always log missing directories)
+        // TODO: may want to make sources optional? (can always log missing directories)
         let dir_results = match std::fs::read_dir(directory) {
             Ok(r) => Ok(r),
             Err(e) => Err(format!("{}: {}", e, directory.display())),
@@ -43,7 +43,6 @@ impl File {
                 .unwrap_or_else(|| "".into());
 
             if metadata.is_file() && extension == "yml" && !lossy_file_stem.starts_with('.') {
-                // TODO: files may want to store a Rc reference to their Role (or something like that...)
                 source_files.push(File::from_path(path)?);
             } else {
                 // TODO: likely ignore, but log (debug level)
@@ -57,22 +56,12 @@ impl File {
         Ok(source_files)
     }
 
-    pub fn find_all(
-        sources: &[PathBuf],
-        roles: &[Role],
-    ) -> Result<Vec<File>, Box<dyn std::error::Error>> {
+    pub fn find_all(sources: &[PathBuf]) -> Result<Vec<File>, Box<dyn std::error::Error>> {
         let mut files: Vec<File> = vec![];
 
         // top level
         for source in sources {
             files.append(&mut File::find_all_in_dir(source)?);
-        }
-
-        // by role
-        for role in roles {
-            for source in &role.sources {
-                files.append(&mut File::find_all_in_dir(source)?);
-            }
         }
 
         Ok(files)
