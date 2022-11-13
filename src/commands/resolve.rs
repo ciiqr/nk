@@ -30,7 +30,7 @@ pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::err
     )?;
 
     // print state
-    println!("{}", serde_yaml::to_string(&resolved)?);
+    print!("{}", serde_yaml::to_string(&resolved)?);
 
     Ok(())
 }
