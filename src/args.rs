@@ -1,7 +1,7 @@
 use std::{path::PathBuf, str::FromStr};
 
 use crate::{
-    commands::{PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs},
+    commands::{PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs, ResolveOutputFormat},
     extensions::{PicoArgsExt, VecOsStringToStringExt},
 };
 
@@ -75,6 +75,13 @@ fn parse_subcommand(
             args: ResolveArgs {
                 // TODO: consider --render true|false instead?
                 render: !pargs.contains_any("--no-render"),
+                output: pargs
+                    .opt_value_from_fn("--output", |format| match format {
+                        "yaml" => Ok(ResolveOutputFormat::Yaml),
+                        "json" => Ok(ResolveOutputFormat::Json),
+                        format => Err(format!("invalid output format: {}", format)),
+                    })?
+                    .unwrap_or(ResolveOutputFormat::Yaml),
             },
         }),
         Some("plugin") => Ok(Subcommand::Plugin {

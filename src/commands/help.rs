@@ -2,7 +2,7 @@
 const USAGE: &str = indoc::indoc! {"
     usage: nk [<global>...] <command> [<args>...]
       nk p|provision [--show-unchanged]
-      nk r|resolve [--no-render]
+      nk r|resolve [--no-render] [--output yaml|json]
       nk h|help
       nk v|version
       nk plugin bash
@@ -15,6 +15,7 @@ const USAGE: &str = indoc::indoc! {"
     args:
       --show-unchanged Whether to print unchanges results.
       --no-render      To disable rendering of templated values.
+      --output         Output format.
 "};
 
 pub fn help() -> Result<(), Box<dyn std::error::Error>> {

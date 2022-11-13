@@ -4,10 +4,13 @@ use crate::{
 };
 
 #[derive(Debug)]
+pub enum ResolveOutputFormat {
+    Yaml,
+    Json,
+}
+#[derive(Debug)]
 pub struct ResolveArgs {
-    // pub show_unchanged: bool,
-    // TODO: --output yaml|json
-    // TODO: --no-render | --render false
+    pub output: ResolveOutputFormat,
     pub render: bool,
 }
 
@@ -30,7 +33,10 @@ pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::err
     )?;
 
     // print state
-    print!("{}", serde_yaml::to_string(&resolved)?);
+    match args.output {
+        ResolveOutputFormat::Yaml => print!("{}", serde_yaml::to_string(&resolved)?),
+        ResolveOutputFormat::Json => println!("{}", serde_json::to_string(&resolved)?),
+    };
 
     Ok(())
 }
