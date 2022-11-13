@@ -22,6 +22,22 @@ impl FromWithName<RawDeclaration> for Declaration {
     }
 }
 
+impl From<Declaration> for RawDeclaration {
+    fn from(d: Declaration) -> Self {
+        Self { states: d.states }
+    }
+}
+
+impl Serialize for Declaration {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let raw = RawDeclaration::from(self.clone());
+        raw.serialize(serializer)
+    }
+}
+
 // NOTE: serde_with::OneOrMany doesn't work here (presumably because we're working with raw values...)
 fn one_or_many<'de, D>(deserializer: D) -> Result<Vec<serde_yaml::Value>, D::Error>
 where

@@ -29,9 +29,8 @@ pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::err
         },
     )?;
 
-    // TODO: print state (properly)
-    // serde_yaml::to_string(&resolved)?
-    println!("{:#?}", resolved);
+    // print state
+    println!("{}", serde_yaml::to_string(&resolved)?);
 
     Ok(())
 }

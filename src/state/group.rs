@@ -1,6 +1,6 @@
 use super::{Condition, Declaration, RawDeclaration};
 use crate::utils::deserialize_map_to_map_of_named;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
 use serde_yaml::Mapping;
 use std::collections::HashMap;
@@ -21,7 +21,7 @@ pub struct Group {
 }
 
 #[serde_as]
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ResolvedGroup {
     #[serde(default)]
     pub vars: Mapping,
