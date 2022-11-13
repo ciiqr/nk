@@ -1,7 +1,7 @@
 // TODO: consider splitting "args:" by command
 const USAGE: &str = indoc::indoc! {"
     usage: nk [<global>...] <command> [<args>...]
-      nk p|provision [--dry-run] [--show-unchanged]
+      nk p|provision [--show-unchanged]
       nk h|help
       nk v|version
       nk plugin bash
@@ -12,7 +12,6 @@ const USAGE: &str = indoc::indoc! {"
       -c|--config <config> Override the config file.
 
     args:
-      --dry-run        Run through provisioning without applying any changes.
       --show-unchanged Whether to print unchanges results.
 "};
 

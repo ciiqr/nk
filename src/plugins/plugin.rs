@@ -78,7 +78,6 @@ impl Plugin {
     > {
         let info_json = serde_json::to_string(info)?;
 
-        // TODO: need to pass in args.dry_run somehow
         let mut child = self.execute(["provision", info_json.as_str()])?;
 
         // write states & close
@@ -141,7 +140,6 @@ pub enum ProvisionStateStatus {
 
 #[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
 pub struct ProvisionInfo {
-    // TODO: if we're going to implement dry_run, pass it through here...
     pub sources: Vec<PathBuf>,
     pub vars: Mapping,
 }

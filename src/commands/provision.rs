@@ -12,7 +12,6 @@ use textwrap::indent;
 
 #[derive(Debug)]
 pub struct ProvisionArgs {
-    pub dry_run: bool,
     pub show_unchanged: bool,
 }
 
