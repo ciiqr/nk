@@ -4,6 +4,7 @@ use crate::{
     merge::merge_vars,
     plugins::{Plugin, ProvisionInfo, ProvisionStateStatus},
     resolve::{resolve, ResolveOptions},
+    root::{ensure_not_root, sudo_prompt},
     vars::get_builtin_vars,
 };
 use console::style;
@@ -16,6 +17,13 @@ pub struct ProvisionArgs {
 
 // TODO: wrap most errors in our own, more user friendly error
 pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
+    // ensure not running as root
+    ensure_not_root()?;
+
+    // run sudo once (so the user can be prompted for their password if required, and any additional sudo's will hopefully be within the password timeout period)
+    // TODO: if this is insufficient, may want to consider running sudo periodically during the provision (to refresh the timeout)
+    sudo_prompt()?;
+
     // initialize builtin vars
     let builtin_vars = get_builtin_vars(&config)?;
 
