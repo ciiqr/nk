@@ -22,13 +22,21 @@ impl Config {
             .as_ref()
             // TODO: .nk.yml OR ~/.nk.yml? (or merge both?)
             .unwrap_or(local_path);
-        // let contents = std::fs::read_to_string(path)?; // TODO
+
         let contents = match std::fs::read_to_string(path) {
             Ok(val) => Ok(val),
             Err(e) => Err(format!("{}: {}", e, path.display())),
         }?;
 
-        Ok(serde_yaml::from_str(&contents)?)
+        let mut conf: Self = serde_yaml::from_str(&contents)?;
+
+        // TODO: maybe there should we a way to flag sources as optional?
+        conf.sources.retain(|s| s.exists());
+        if conf.sources.is_empty() {
+            Err("at least one source must exist".into())
+        } else {
+            Ok(conf)
+        }
     }
 }
 
