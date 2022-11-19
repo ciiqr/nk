@@ -1,11 +1,12 @@
 use crate::{
     config::{ConfigPlugin, PluginSource},
+    eval::DeclaredState,
     extensions::SerdeDeserializeFromYamlPath,
     state::Condition,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
-use serde_yaml::{Mapping, Value};
+use serde_yaml::Mapping;
 use std::{
     ffi::OsStr,
     io::Write,
@@ -16,7 +17,6 @@ use std::{
 #[serde_as]
 #[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
-// TODO: maybe bad name...
 pub struct PluginDefinition {
     pub name: String,
     pub executable: String,
@@ -25,7 +25,11 @@ pub struct PluginDefinition {
     #[serde_as(deserialize_as = "OneOrMany<_>")]
     #[serde(default)]
     pub when: Vec<Condition>,
-    // TODO: will likely have a priority system (ie. so files are created first, then programs are installed, then everything else?)
+
+    // TODO: could also support before: if necessary
+    #[serde_as(deserialize_as = "OneOrMany<_>")]
+    #[serde(default)]
+    pub after: Vec<String>,
 }
 
 #[serde_as]
@@ -71,7 +75,7 @@ impl Plugin {
     pub fn provision<'a>(
         &self,
         info: &ProvisionInfo,
-        states: &Vec<Value>,
+        states: &Vec<DeclaredState>,
     ) -> Result<
         impl Iterator<Item = Result<ProvisionStateOutput, serde_json::Error>> + 'a,
         Box<dyn std::error::Error>,
@@ -82,7 +86,6 @@ impl Plugin {
 
         // write states & close
         {
-            // TODO: change to one state per line...
             let states_json = serde_json::to_string(states)?;
 
             let mut child_stdin = child

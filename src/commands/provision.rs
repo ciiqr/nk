@@ -8,6 +8,8 @@ use crate::{
     vars::get_builtin_vars,
 };
 use console::style;
+use itertools::Itertools;
+use std::cmp::Ordering;
 use textwrap::indent;
 
 #[derive(Debug)]
@@ -35,7 +37,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         .plugins
         .iter()
         .map(Plugin::from_config)
-        .collect::<Result<Vec<_>, _>>()?;
+        .collect::<Result<_, _>>()?;
 
     // filter plugins for os
     let plugins = evaluator.filter_plugins(all_plugins)?;
@@ -49,7 +51,43 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     )?;
 
     // match each state to a plugin (group states by their matching plugin)
-    let execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
+    let mut execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
+
+    // sort execution sets
+    execution_sets.sort_unstable_by(|(a, a_states), (b, b_states)| {
+        let a_declarations = a_states
+            .iter()
+            .map(|s| s.declaration.clone())
+            .unique()
+            .collect::<Vec<_>>();
+        let b_declarations = b_states
+            .iter()
+            .map(|s| s.declaration.clone())
+            .unique()
+            .collect::<Vec<_>>();
+
+        let a_depends_on_b = a
+            .definition
+            .after
+            .iter()
+            .any(|declaration| b_declarations.contains(declaration));
+        let b_depends_on_a = b
+            .definition
+            .after
+            .iter()
+            .any(|declaration| a_declarations.contains(declaration));
+
+        if a_depends_on_b && b_depends_on_a {
+            // If both contain each others deps, equal is best we can do...
+            Ordering::Equal
+        } else if a_depends_on_b {
+            Ordering::Greater
+        } else if b_depends_on_a {
+            Ordering::Less
+        } else {
+            Ordering::Equal
+        }
+    });
 
     // provision
     let provision_info = ProvisionInfo {

@@ -3,6 +3,8 @@ use crate::{
     state::{self, Condition},
 };
 use rhai::{Engine, Scope};
+use serde::{Deserialize, Serialize};
+use serde_with::serde_as;
 use serde_yaml::Value;
 use std::collections::HashMap;
 
@@ -110,7 +112,7 @@ impl Evaluator {
         declarations: &HashMap<String, state::Declaration>,
         plugins: Vec<Plugin>,
     ) -> Result<ExecutionSets, Box<dyn std::error::Error>> {
-        let mut execution_sets: HashMap<Plugin, Vec<serde_yaml::Value>> = HashMap::new();
+        let mut execution_sets: HashMap<Plugin, Vec<DeclaredState>> = HashMap::new();
 
         for declaration in declarations.values() {
             for state in declaration.states.clone() {
@@ -131,10 +133,14 @@ impl Evaluator {
                     }
                 }
                 if let Some(plugin) = matching_plugin {
+                    let declared_state = DeclaredState {
+                        declaration: declaration.name.clone(),
+                        state,
+                    };
                     if let Some((_, v)) = execution_sets.iter_mut().find(|(p, _)| *p == plugin) {
-                        v.push(state);
+                        v.push(declared_state);
                     } else {
-                        execution_sets.insert(plugin.clone(), vec![state]);
+                        execution_sets.insert(plugin.clone(), vec![declared_state]);
                     }
                 } else {
                     // TODO: would prefer to handle the logging for this in provision
@@ -148,4 +154,12 @@ impl Evaluator {
 }
 
 // TODO: really should be fixing the Value type...
-type ExecutionSets = Vec<(Plugin, Vec<serde_yaml::Value>)>;
+type ExecutionSets = Vec<(Plugin, Vec<DeclaredState>)>;
+
+// TODO: rename?
+#[serde_as]
+#[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
+pub struct DeclaredState {
+    pub declaration: String,
+    pub state: Value,
+}
