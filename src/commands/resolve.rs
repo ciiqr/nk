@@ -1,6 +1,6 @@
 use crate::{
-    config::Config, eval::Evaluator, resolve::resolve as resolveState, resolve::ResolveOptions,
-    vars::get_builtin_vars,
+    config::Config, eval::Evaluator, plugins::Plugin, resolve::resolve as resolveState,
+    resolve::ResolveOptions, vars::get_builtin_vars,
 };
 
 #[derive(Debug)]
@@ -22,11 +22,22 @@ pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::err
     // initialize evaluator (machine, roles, platform, etc.)
     let evaluator = Evaluator::new(builtin_vars.clone());
 
+    // load plugins
+    let all_plugins = config
+        .plugins
+        .iter()
+        .map(Plugin::from_config)
+        .collect::<Result<_, _>>()?;
+
+    // filter plugins for os
+    let plugins = evaluator.filter_plugins(all_plugins)?;
+
     // resolve state
     let resolved = resolveState(
         &config,
         &builtin_vars,
         &evaluator,
+        &plugins,
         ResolveOptions {
             render: args.render,
         },

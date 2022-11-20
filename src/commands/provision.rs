@@ -47,6 +47,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         &config,
         &builtin_vars,
         &evaluator,
+        &plugins,
         ResolveOptions { render: true },
     )?;
 

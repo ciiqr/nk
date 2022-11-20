@@ -2,7 +2,7 @@ use crate::traits::FromWithName;
 use serde::{Deserialize, Deserializer, Serialize};
 use serde_yaml::Value;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Declaration {
     pub name: String,
     pub states: Vec<Value>,

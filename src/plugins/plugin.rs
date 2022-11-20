@@ -2,20 +2,23 @@ use crate::{
     config::{ConfigPlugin, PluginSource},
     eval::DeclaredState,
     extensions::SerdeDeserializeFromYamlPath,
-    state::Condition,
+    state::{Condition, Declaration, RawDeclaration},
+    utils::deserialize_map_to_map_of_named,
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
 use serde_yaml::Mapping;
 use std::{
+    collections::HashMap,
     ffi::OsStr,
+    hash::{Hash, Hasher},
     io::Write,
     path::PathBuf,
     process::{Command, Stdio},
 };
 
 #[serde_as]
-#[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct PluginDefinition {
     pub name: String,
@@ -30,6 +33,12 @@ pub struct PluginDefinition {
     #[serde_as(deserialize_as = "OneOrMany<_>")]
     #[serde(default)]
     pub after: Vec<String>,
+
+    #[serde(
+        default,
+        deserialize_with = "deserialize_map_to_map_of_named::<RawDeclaration, _, _>"
+    )]
+    pub dependencies: HashMap<String, Declaration>,
 }
 
 #[serde_as]
@@ -42,13 +51,26 @@ pub struct PluginProvisionDefinition {
     pub when: Vec<Condition>,
 }
 
-#[derive(Debug, Hash, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Eq)]
 pub struct Plugin {
     // TODO: maybe rename, represents the plugin on disk, currently same thing
     // as plugin source, but could be different if we add remote plugins that
     // need to be downloaded first
     pub path: PathBuf,
     pub definition: PluginDefinition,
+}
+
+// TODO: path is good enough for now, but might want to compare more fields
+// NOTE: custom implementation because HashMap is not itself hashable
+impl PartialEq for Plugin {
+    fn eq(&self, other: &Self) -> bool {
+        self.path == other.path
+    }
+}
+impl Hash for Plugin {
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        self.path.hash(hasher);
+    }
 }
 
 // TODO: might change to be a specific plugin implementation (for basic plugins)
