@@ -8,6 +8,7 @@ mod plugins;
 mod render;
 mod resolve;
 mod root;
+mod sort;
 mod state;
 mod traits;
 mod utils;

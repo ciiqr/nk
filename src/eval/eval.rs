@@ -149,7 +149,7 @@ impl Evaluator {
 }
 
 // TODO: really should be fixing the Value type...
-type ExecutionSets = Vec<(Plugin, Vec<DeclaredState>)>;
+pub type ExecutionSets = Vec<(Plugin, Vec<DeclaredState>)>;
 
 // TODO: rename?
 #[serde_as]
