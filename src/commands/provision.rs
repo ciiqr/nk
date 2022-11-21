@@ -1,6 +1,6 @@
 use crate::{
     config::Config,
-    eval::Evaluator,
+    eval::{DeclaredState, Evaluator},
     merge::merge_vars,
     plugins::{Plugin, ProvisionInfo, ProvisionStateStatus},
     resolve::{resolve, ResolveOptions},
@@ -9,6 +9,7 @@ use crate::{
 };
 use console::style;
 use itertools::Itertools;
+use jsonschema::JSONSchema;
 use std::cmp::Ordering;
 use textwrap::indent;
 
@@ -90,6 +91,9 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
         }
     });
 
+    // validate
+    validate(&execution_sets)?;
+
     // provision
     let provision_info = ProvisionInfo {
         sources: config.sources,
@@ -156,4 +160,46 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     }
 
     Ok(())
+}
+
+fn validate(
+    execution_sets: &[(Plugin, Vec<DeclaredState>)],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let mut any_validation_errors = false;
+    for (plugin, states) in execution_sets {
+        let json_schema = serde_json::to_value(&plugin.definition.schema)?;
+
+        match JSONSchema::compile(&json_schema) {
+            Ok(schema) => {
+                for state in states {
+                    let json_state = serde_json::to_value(state.state.clone())?;
+                    if let Err(errors) = schema.validate(&json_state) {
+                        for error in errors {
+                            println!(
+                                "{}",
+                                style(format!(
+                                    "Error validating '{}' state for '{}' plugin: {}",
+                                    state.declaration, plugin.definition.name, error
+                                ))
+                                .red()
+                            );
+                            any_validation_errors = true;
+                        }
+                    };
+                }
+
+                Ok(())
+            }
+            Err(e) => Err(format!(
+                "error parsing '{}' plugin's schema: {}",
+                plugin.definition.name, e
+            )),
+        }?;
+    }
+
+    if any_validation_errors {
+        Err("validation error".into())
+    } else {
+        Ok(())
+    }
 }

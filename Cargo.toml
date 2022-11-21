@@ -31,3 +31,4 @@ whoami = "1.2.3"
 home = "0.5.4"
 os_info = { version = "3.5.1", default-features = false }
 itertools = "0.10.5"
+jsonschema = "0.16.1"

@@ -7,7 +7,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
-use serde_yaml::Mapping;
+use serde_yaml::{Mapping, Value};
 use std::{
     collections::HashMap,
     ffi::OsStr,
@@ -39,6 +39,8 @@ pub struct PluginDefinition {
         deserialize_with = "deserialize_map_to_map_of_named::<RawDeclaration, _, _>"
     )]
     pub dependencies: HashMap<String, Declaration>,
+
+    pub schema: Value,
 }
 
 #[serde_as]
