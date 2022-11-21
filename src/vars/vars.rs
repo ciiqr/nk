@@ -1,43 +1,58 @@
+use crate::{config::Config, state::Machine};
 use home::home_dir;
 use os_info::Type;
 use serde_yaml::Value;
-use std::collections::HashMap;
-
-use crate::{config::Config, state};
+use std::{collections::HashMap, env};
 
 pub fn get_builtin_vars(
     config: &Config,
 ) -> Result<HashMap<String, Value>, Box<dyn std::error::Error>> {
     // determine machine/role information
-    let machine = state::Machine::get_current(config)?;
+    let hostname = hostname::get()?.to_string_lossy().to_string();
+    let machine = get_current_machine(config, &hostname)?;
 
     let mut vars = HashMap::new();
 
-    vars.insert("machine".into(), Value::String(machine.name.clone()));
-    vars.insert(
-        "roles".into(),
-        Value::Sequence(machine.roles.into_iter().map(Value::String).collect()),
-    );
-    vars.insert("os".into(), Value::String(std::env::consts::OS.into()));
-    vars.insert(
-        "family".into(),
-        Value::String(std::env::consts::FAMILY.into()),
-    );
-    vars.insert("arch".into(), Value::String(std::env::consts::ARCH.into()));
+    vars.insert("hostname".into(), Value::String(hostname));
+    vars.insert("machine".into(), Value::String(machine.name));
+    vars.insert("roles".into(), Value::Sequence(get_roles(machine.roles)));
+    vars.insert("os".into(), Value::String(env::consts::OS.into()));
+    vars.insert("family".into(), Value::String(env::consts::FAMILY.into()));
+    vars.insert("arch".into(), Value::String(env::consts::ARCH.into()));
     vars.insert("user".into(), Value::String(whoami::username()));
-    vars.insert(
-        "home".into(),
-        Value::String(
-            home_dir()
-                .ok_or("Could not determine home directory")?
-                .as_os_str()
-                .to_string_lossy()
-                .into_owned(),
-        ),
-    );
+    vars.insert("home".into(), Value::String(get_home_dir()?));
     vars.insert("distro".into(), get_distro_var());
 
     Ok(vars)
+}
+
+fn get_roles(roles: Vec<String>) -> Vec<Value> {
+    roles.into_iter().map(Value::String).collect()
+}
+
+fn get_home_dir() -> Result<String, String> {
+    Ok(home_dir()
+        .ok_or("Could not determine home directory")?
+        .as_os_str()
+        .to_string_lossy()
+        .into())
+}
+
+fn get_current_machine(
+    config: &Config,
+    hostname: &str,
+) -> Result<Machine, Box<dyn std::error::Error>> {
+    let machine = config.machine.to_owned().unwrap_or_else(|| hostname.into());
+
+    Ok(config
+        .machines
+        .iter()
+        .find(|m| m.name == machine)
+        .cloned()
+        .unwrap_or(Machine {
+            name: machine,
+            roles: vec![],
+        }))
 }
 
 fn get_distro_var() -> Value {
