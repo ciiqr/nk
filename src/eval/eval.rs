@@ -10,12 +10,10 @@ use std::collections::HashMap;
 
 pub struct Evaluator {
     engine: Engine,
-    // global_scope: Scope<'a>,
 }
 
 impl Evaluator {
     pub fn new(vars: HashMap<String, Value>) -> Self {
-        // TODO: consider how I want to handle this stuff (maybe make lazy, maybe include in Evaluator with Rc?)
         let mut global_scope = Scope::new();
         for (k, var) in vars {
             match var {
@@ -34,10 +32,7 @@ impl Evaluator {
         #[allow(deprecated)]
         engine.on_var(move |name, _index, _context| Ok(global_scope.get_value(name)));
 
-        Evaluator {
-            engine,
-            // global_scope,
-        }
+        Evaluator { engine }
     }
 
     pub fn eval_conditions(

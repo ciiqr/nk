@@ -30,7 +30,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // initialize builtin vars
     let builtin_vars = get_builtin_vars(&config)?;
 
-    // initialize evaluator (machine, roles, platform, etc.)
+    // initialize evaluator
     let evaluator = Evaluator::new(builtin_vars.clone());
 
     // load plugins
