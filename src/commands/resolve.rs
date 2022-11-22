@@ -26,7 +26,8 @@ pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::err
     let all_plugins = config
         .plugins
         .iter()
-        .map(Plugin::from_config)
+        .enumerate()
+        .map(|(i, p)| Plugin::from_config(p, i))
         .collect::<Result<_, _>>()?;
 
     // filter plugins for os

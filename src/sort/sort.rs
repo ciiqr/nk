@@ -8,7 +8,7 @@ use crate::eval::ExecutionSets;
 pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
     // collect plugin names by the declarations they provision
     let mut plugin_names_by_declaration: HashMap<String, Vec<String>> = HashMap::new();
-    for (plugin, states) in &mut *execution_sets {
+    for (plugin, states) in &*execution_sets {
         let declarations = states
             .iter()
             .map(|s| s.declaration.clone())
@@ -30,25 +30,41 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
 
     // sort plugin names topologically
     let mut ts = TopologicalSort::<String>::new();
-    for (plugin, _) in &mut *execution_sets {
-        if plugin.definition.after.is_empty() {
-            ts.insert(plugin.definition.name.clone());
-        } else {
-            for declaration in &plugin.definition.after {
-                // TODO: debugging level log if we don't match
-                if let Some(dependent_plugin_names) = plugin_names_by_declaration.get(declaration) {
-                    for dependent_plugin_name in dependent_plugin_names {
-                        ts.add_dependency(dependent_plugin_name, plugin.definition.name.clone());
-                    }
+    for (plugin, _) in &*execution_sets {
+        ts.insert(plugin.definition.name.clone());
+
+        for declaration in &plugin.definition.after {
+            // TODO: debugging level log if we don't match
+            if let Some(dependent_plugin_names) = plugin_names_by_declaration.get(declaration) {
+                for dependent_plugin_name in dependent_plugin_names {
+                    ts.add_dependency(dependent_plugin_name, plugin.definition.name.clone());
                 }
             }
         }
     }
 
-    let plugin_order: Vec<_> = ts.collect();
+    // sort independent plugins based on their order in the config
+    let mut plugin_order = ts.pop_all();
+    plugin_order.sort_by_cached_key(|name| {
+        let plugin = execution_sets
+            .iter()
+            .map(|(p, _)| p)
+            .find(|p| p.definition.name == *name);
+        if let Some(plugin) = plugin {
+            plugin.config_index
+        } else {
+            // NOTE: shouldn't be possible
+            0
+        }
+    });
 
-    // sort based in plugin names
-    execution_sets.sort_unstable_by_key(|(plugin, _)| {
+    // append dependent plugins
+    // TODO: order of dependent plugins is still variable, may need to implement our own topological sort
+    let mut dependent_plugins = ts.collect::<Vec<_>>();
+    plugin_order.append(&mut dependent_plugins);
+
+    // sort based on plugin names
+    execution_sets.sort_by_cached_key(|(plugin, _)| {
         plugin_order
             .iter()
             .position(|p| *p == plugin.definition.name)

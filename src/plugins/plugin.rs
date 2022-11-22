@@ -60,6 +60,7 @@ pub struct Plugin {
     // need to be downloaded first
     pub path: PathBuf,
     pub definition: PluginDefinition,
+    pub config_index: usize,
 }
 
 // TODO: path is good enough for now, but might want to compare more fields
@@ -77,7 +78,10 @@ impl Hash for Plugin {
 
 // TODO: might change to be a specific plugin implementation (for basic plugins)
 impl Plugin {
-    pub fn from_config(plugin: &ConfigPlugin) -> Result<Plugin, Box<dyn std::error::Error>> {
+    pub fn from_config(
+        plugin: &ConfigPlugin,
+        config_index: usize,
+    ) -> Result<Plugin, Box<dyn std::error::Error>> {
         let path = match &plugin.source {
             PluginSource::Local { source } => source,
         };
@@ -93,6 +97,7 @@ impl Plugin {
         Ok(Plugin {
             path: path.to_path_buf(),
             definition,
+            config_index,
         })
     }
 

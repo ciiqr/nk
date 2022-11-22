@@ -36,7 +36,8 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let all_plugins = config
         .plugins
         .iter()
-        .map(Plugin::from_config)
+        .enumerate()
+        .map(|(i, p)| Plugin::from_config(p, i))
         .collect::<Result<_, _>>()?;
 
     // filter plugins for os
