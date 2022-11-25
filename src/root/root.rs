@@ -6,7 +6,7 @@ pub fn ensure_not_root() -> Result<(), String> {
 pub fn ensure_not_root() -> Result<(), String> {
     unsafe {
         if nix::libc::getuid() == 0 {
-            Err("nk: should not be run as root".into())
+            Err("should not be run as root".into())
         } else {
             Ok(())
         }
@@ -27,6 +27,6 @@ pub fn sudo_prompt() -> Result<(), Box<dyn std::error::Error>> {
     if status.success() {
         Ok(())
     } else {
-        Err("nk: failed to run sudo".into())
+        Err("failed to run sudo".into())
     }
 }
