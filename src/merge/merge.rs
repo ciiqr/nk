@@ -1,8 +1,5 @@
-use std::collections::HashMap;
-
-use serde_yaml::{Mapping, Value};
-
 use crate::state::{self, ResolvedGroup};
+use serde_yaml::Value;
 
 pub fn merge_plugin_dependencies(mut a: ResolvedGroup, b: state::Declaration) -> ResolvedGroup {
     let name = b.name.clone();
@@ -59,13 +56,4 @@ fn merge_values(a: Value, b: Value) -> Value {
         // TODO: decide how we want to handle lists...
         (_, b) => b,
     }
-}
-
-pub fn merge_vars(builtin_vars: HashMap<String, Value>, vars: Mapping) -> Result<Mapping, String> {
-    // NOTE: if we end up with any built in mapping vars, we may want to merge this properly
-    let mut data = Mapping::new();
-    data.extend(builtin_vars.into_iter().map(|(k, v)| (Value::String(k), v)));
-    data.extend(vars.into_iter());
-
-    Ok(data)
 }

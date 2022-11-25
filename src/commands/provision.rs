@@ -1,7 +1,6 @@
 use crate::{
     config::Config,
     eval::{DeclaredState, Evaluator},
-    merge::merge_vars,
     plugins::{Plugin, ProvisionInfo, ProvisionStateStatus},
     resolve::{resolve, ResolveOptions},
     root::{ensure_not_root, sudo_prompt},
@@ -64,7 +63,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     // provision
     let provision_info = ProvisionInfo {
         sources: config.sources,
-        vars: merge_vars(builtin_vars, resolved.vars)?,
+        vars: resolved.vars,
     };
     let provision_results = execution_sets
         .iter()

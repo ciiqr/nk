@@ -33,9 +33,9 @@ pub struct ResolvedGroup {
 }
 
 impl ResolvedGroup {
-    pub fn new() -> Self {
+    pub fn new(vars: Mapping) -> Self {
         Self {
-            vars: Mapping::new(),
+            vars,
             declarations: HashMap::new(),
         }
     }
