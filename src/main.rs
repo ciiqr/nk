@@ -17,13 +17,14 @@ mod vars;
 use args::{parse_args, Subcommand};
 use commands::{help, plugin, provision, resolve, version};
 use config::Config;
-use std::process::exit;
+use std::process::ExitCode;
 
-fn main() {
+fn main() -> ExitCode {
     if let Err(err) = run() {
         eprintln!("nk: {}", err);
-        exit(1);
+        return ExitCode::from(1);
     }
+    ExitCode::SUCCESS
 }
 
 fn run() -> Result<(), Box<dyn std::error::Error>> {
