@@ -11,7 +11,7 @@ use futures::{
 };
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use octocrab::models::repos::Release;
+use octocrab::{models::repos::Release, Octocrab};
 use serde_yaml::Value;
 use std::{
     collections::HashMap,
@@ -205,10 +205,17 @@ async fn get_release(
         return Ok(release.clone());
     }
 
+    // Create github api client
+    let mut builder = Octocrab::builder();
+    if let Ok(token) = std::env::var("GITHUB_TOKEN") {
+        builder = builder.personal_token(token);
+    }
+    let octocrab = builder.build()?;
+
     match version {
         Version::Latest => {
             // TODO: map common errors (http 404, gh rate limiting)
-            let release = octocrab::instance()
+            let release = octocrab
                 .repos(owner.clone(), repo.clone())
                 .releases()
                 .get_latest()
@@ -234,11 +241,7 @@ async fn get_release(
             Ok(release)
         }
         Version::Version(v) => {
-            let release = octocrab::instance()
-                .repos(owner, repo)
-                .releases()
-                .get_by_tag(v)
-                .await?;
+            let release = octocrab.repos(owner, repo).releases().get_by_tag(v).await?;
 
             // cache release
             RELEASE_CACHE
