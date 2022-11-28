@@ -16,9 +16,10 @@ jobs:
           - os: ubuntu-latest
             path: target/x86_64-unknown-linux-gnu/release/nk
             artifact: nk-linux-x86_64
-          - os: windows-latest
-            path: target/release/nk.exe
-            artifact: nk-windows-x86_64.exe
+          # TODO: fix compilation on windows
+          # - os: windows-latest
+          #   path: target/release/nk.exe
+          #   artifact: nk-windows-x86_64.exe
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: actions/checkout@v3
@@ -26,10 +27,11 @@ jobs:
         run: cargo build --release
         if: runner.os != 'Linux'
       - name: Build
-        env:
-          LDFLAGS: -Wl,--copy-dt-needed-entries
-          RUSTFLAGS: -C target-feature=+crt-static
-        run: cargo build --release --target x86_64-unknown-linux-gnu
+        run: |
+          # TODO: re-enable static linking & fix error adding symbols: DSO missing from command line
+          # RUSTFLAGS='-C target-feature=+crt-static'
+          # RUSTFLAGS='-C target-feature=+crt-static -C link-args=-Wl,--copy-dt-needed-entries'
+          cargo build --release --target x86_64-unknown-linux-gnu
         if: runner.os == 'Linux'
       - name: Upload binary
         uses: actions/upload-artifact@v3
