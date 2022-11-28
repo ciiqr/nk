@@ -1,7 +1,7 @@
 use crate::{
     config::Config,
     eval::{DeclaredState, Evaluator},
-    plugins::{Plugin, ProvisionInfo, ProvisionStateStatus},
+    plugins::{load_plugins, Plugin, ProvisionInfo, ProvisionStateStatus},
     resolve::{resolve, ResolveOptions},
     root::{ensure_not_root, sudo_prompt},
     sort::sort_execution_sets,
@@ -17,7 +17,10 @@ pub struct ProvisionArgs {
 }
 
 // TODO: wrap most errors in our own, more user friendly error
-pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn provision(
+    args: ProvisionArgs,
+    config: Config,
+) -> Result<(), Box<dyn std::error::Error>> {
     // ensure not running as root
     ensure_not_root()?;
 
@@ -32,15 +35,7 @@ pub fn provision(args: ProvisionArgs, config: Config) -> Result<(), Box<dyn std:
     let evaluator = Evaluator::new(builtin_vars.clone());
 
     // load plugins
-    let all_plugins = config
-        .plugins
-        .iter()
-        .enumerate()
-        .map(|(i, p)| Plugin::from_config(p, i))
-        .collect::<Result<_, _>>()?;
-
-    // filter plugins for os
-    let plugins = evaluator.filter_plugins(all_plugins)?;
+    let plugins = load_plugins(&config, &builtin_vars, &evaluator).await?;
 
     // resolve state
     let resolved = resolve(

@@ -9,4 +9,4 @@ jobs:
       - name: Lint
         run: cargo clippy --quiet
       - name: Style Check
-        run: rustfmt src/**/*.rs src/*.rs --check
+        run: cargo fmt --check

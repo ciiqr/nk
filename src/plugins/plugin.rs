@@ -15,6 +15,7 @@ use std::{
     io::Write,
     path::PathBuf,
     process::{Command, Stdio},
+    str::FromStr,
 };
 
 #[serde_as]
@@ -83,7 +84,15 @@ impl Plugin {
         config_index: usize,
     ) -> Result<Plugin, Box<dyn std::error::Error>> {
         let path = match &plugin.source {
-            PluginSource::Local { source } => source,
+            PluginSource::Local { source } => source.clone(),
+            PluginSource::Github {
+                owner: _,
+                repo: _,
+                version: _,
+                name,
+            } => PathBuf::from_str(&shellexpand::tilde(
+                format!("~/.nk/plugins/{}", name).as_str(),
+            ))?,
         };
 
         let definition = {
@@ -95,7 +104,7 @@ impl Plugin {
         };
 
         Ok(Plugin {
-            path: path.to_path_buf(),
+            path,
             definition,
             config_index,
         })

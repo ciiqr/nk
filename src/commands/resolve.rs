@@ -1,5 +1,5 @@
 use crate::{
-    config::Config, eval::Evaluator, plugins::Plugin, resolve::resolve as resolveState,
+    config::Config, eval::Evaluator, plugins::load_plugins, resolve::resolve as resolveState,
     resolve::ResolveOptions, vars::get_builtin_vars,
 };
 
@@ -15,7 +15,7 @@ pub struct ResolveArgs {
 }
 
 // TODO: wrap most errors in our own, more user friendly error
-pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
     // initialize builtin vars
     let builtin_vars = get_builtin_vars(&config)?;
 
@@ -23,15 +23,7 @@ pub fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::err
     let evaluator = Evaluator::new(builtin_vars.clone());
 
     // load plugins
-    let all_plugins = config
-        .plugins
-        .iter()
-        .enumerate()
-        .map(|(i, p)| Plugin::from_config(p, i))
-        .collect::<Result<_, _>>()?;
-
-    // filter plugins for os
-    let plugins = evaluator.filter_plugins(all_plugins)?;
+    let plugins = load_plugins(&config, &builtin_vars, &evaluator).await?;
 
     // resolve state
     let resolved = resolveState(

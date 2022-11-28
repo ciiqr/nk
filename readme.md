@@ -20,14 +20,12 @@ config focused configuration management
 
 -   Create nk config `./.nk.yml`
 
-    <!-- TODO: need remote plugins to make this at all reasonable without more steps here -->
-
     <!-- prettier-ignore -->
     ```yaml
     sources:
       - .
     plugins:
-      - ../nk-plugins/brew
+      - ciiqr/nk-plugins#brew
     ```
 
 -   Create state config ie. `config.yml` (any `*.yml` except dotfiles `.*.yml`)

@@ -19,21 +19,22 @@ use commands::{help, plugin, provision, resolve, version};
 use config::Config;
 use std::process::ExitCode;
 
-fn main() -> ExitCode {
-    if let Err(err) = run() {
+#[tokio::main]
+async fn main() -> ExitCode {
+    if let Err(err) = run().await {
         eprintln!("nk: {}", err);
         return ExitCode::from(1);
     }
     ExitCode::SUCCESS
 }
 
-fn run() -> Result<(), Box<dyn std::error::Error>> {
+async fn run() -> Result<(), Box<dyn std::error::Error>> {
     let arguments = parse_args()?;
     let config = Config::new(&arguments);
 
     match arguments.subcommand {
-        Subcommand::Provision { args } => provision(args, config?),
-        Subcommand::Resolve { args } => resolve(args, config?),
+        Subcommand::Provision { args } => provision(args, config?).await,
+        Subcommand::Resolve { args } => resolve(args, config?).await,
         Subcommand::Plugin { args } => plugin(args),
         Subcommand::Help => help(),
         Subcommand::Version => version(),

@@ -3,4 +3,4 @@
 set -e
 
 cargo clippy --quiet
-rustfmt src/**/*.rs src/*.rs --check
+cargo fmt --check

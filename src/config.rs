@@ -3,6 +3,8 @@ use crate::{
     state::{Machine, RawMachine},
     utils::deserialize_map_to_vec_of_named,
 };
+use lazy_static::lazy_static;
+use regex::Regex;
 use serde::{de::Error, Deserialize, Deserializer};
 use std::{path::PathBuf, str::FromStr};
 
@@ -13,7 +15,6 @@ pub struct Config {
     pub machine: Option<String>,
     #[serde(deserialize_with = "expand_paths")]
     pub sources: Vec<PathBuf>,
-    // TODO: maybe move plugin config to sources if current setup is too limiting
     pub plugins: Vec<ConfigPlugin>,
     #[serde(
         default,
@@ -25,12 +26,13 @@ pub struct Config {
 impl Config {
     pub fn new(arguments: &Arguments) -> Result<Config, Box<dyn std::error::Error>> {
         // TODO: provide a better error when config file doesn't exist
-        let local_path = &PathBuf::from_str(&shellexpand::tilde(".nk.yml"))?;
+        let local_path = &PathBuf::from_str(".nk.yml")?;
         let path = arguments
             .global
             .config
             .as_ref()
             // TODO: .nk.yml OR ~/.nk.yml? (or merge both?)
+            // TODO: - resolve relative paths with the parent dir of the config as the base: https://crates.io/crates/relative-path
             .unwrap_or(local_path);
 
         let contents = match std::fs::read_to_string(path) {
@@ -56,9 +58,27 @@ pub struct ConfigPlugin {
     pub source: PluginSource,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub enum Version {
+    Latest,
+    Version(String),
+}
+
 #[derive(Debug)]
 pub enum PluginSource {
-    Local { source: PathBuf },
+    Local {
+        source: PathBuf,
+    },
+    Github {
+        owner: String,
+        repo: String,
+        version: Version,
+        name: String,
+    },
+}
+
+lazy_static! {
+    static ref GITHUB_PLUGIN_REGEX: Regex = Regex::new(r"^(.+?)/(.+?)(@(.+))?#(.*)$").unwrap();
 }
 
 impl<'de> Deserialize<'de> for PluginSource {
@@ -73,10 +93,31 @@ impl<'de> Deserialize<'de> for PluginSource {
                 source: PathBuf::from_str(&shellexpand::tilde(&source))
                     .map_err(D::Error::custom)?,
             }),
-            Some(_) | None => Err(D::Error::custom(format!(
-                "Unrecognized plugin source: {}",
-                source
-            ))),
+            Some(_) | None => {
+                let captures = GITHUB_PLUGIN_REGEX.captures(&source).ok_or_else(|| {
+                    D::Error::custom(format!("Unrecognized plugin source: {}", source))
+                })?;
+
+                match (
+                    captures.get(1),
+                    captures.get(2),
+                    captures.get(4),
+                    captures.get(5),
+                ) {
+                    (Some(owner), Some(repo), version, Some(name)) => Ok(PluginSource::Github {
+                        owner: owner.as_str().to_string(),
+                        repo: repo.as_str().to_string(),
+                        version: version
+                            .map(|v| Version::Version(v.as_str().to_string()))
+                            .unwrap_or(Version::Latest),
+                        name: name.as_str().to_string(),
+                    }),
+                    _ => Err(D::Error::custom(format!(
+                        "Unrecognized plugin source: {}",
+                        source
+                    ))),
+                }
+            }
         }
     }
 }
@@ -86,6 +127,7 @@ where
     D: Deserializer<'de>,
 {
     let paths: Vec<String> = Deserialize::deserialize(deserializer)?;
+    // TODO: maybe std::path::absolute once stable?
     paths
         .iter()
         .map(|s| PathBuf::from_str(&shellexpand::tilde(&s)).map_err(D::Error::custom))

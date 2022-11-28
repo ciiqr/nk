@@ -46,16 +46,12 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
     // sort independent plugins based on their order in the config
     let mut plugin_order = ts.pop_all();
     plugin_order.sort_by_cached_key(|name| {
-        let plugin = execution_sets
+        execution_sets
             .iter()
             .map(|(p, _)| p)
-            .find(|p| p.definition.name == *name);
-        if let Some(plugin) = plugin {
-            plugin.config_index
-        } else {
-            // NOTE: shouldn't be possible
-            0
-        }
+            .find(|p| p.definition.name == *name)
+            .unwrap_or_else(|| unreachable!("plugin not found in execution sets"))
+            .config_index
     });
 
     // append dependent plugins
@@ -68,6 +64,6 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
         plugin_order
             .iter()
             .position(|p| *p == plugin.definition.name)
-            .unwrap_or(0) // NOTE: shouldn't be possible
+            .unwrap_or_else(|| unreachable!("plugin position not found in plugin order list"))
     });
 }
