@@ -39,4 +39,6 @@ tokio = { version = "1.22.0", features = ["full"] }
 reqwest = { version = "0.11.13", features = ["stream"] }
 async-compression = { version = "0.3.15", features = ["futures-io", "gzip"] }
 futures = "0.3.25"
+# TODO: remove async-std once fixed in async-tar
+async-std = { version = "1.6.0", features = ["unstable"] }
 async-tar = "0.4.2"
