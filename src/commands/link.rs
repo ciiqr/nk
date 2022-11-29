@@ -11,6 +11,12 @@ pub struct LinkArgs {
 }
 
 pub fn link(args: LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
+    // resolve path
+    let canonical_path = match args.path.canonicalize() {
+        Ok(p) => Ok(p),
+        Err(e) => Err(format!("{}: {}", e, args.path.display())),
+    }?;
+
     // load plugin info
     let definition = {
         let plugin_yml = args.path.join("plugin.yml");
@@ -29,8 +35,14 @@ pub fn link(args: LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
         fs::remove_dir_all(plugin_dir.clone())?;
     }
 
+    // make parent dir
+    let parent_dir = plugin_dir
+        .parent()
+        .ok_or("plugin destination parent dir could not be determined")?;
+    fs::create_dir_all(parent_dir)?;
+
     // link plugin
-    symlink_dir(args.path, plugin_dir)?;
+    symlink_dir(canonical_path, plugin_dir)?;
 
     Ok(())
 }
