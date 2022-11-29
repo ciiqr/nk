@@ -15,7 +15,7 @@ config focused configuration management
     _append to your `~/.zprofile` or `~/.bash_profile`/`~/.bashrc` to make this permanent_
 
     ```bash
-    export PATH="${PATH}:${HOME}/.nk/bin"
+    export PATH="${HOME}/.nk/bin:${PATH}"
     ```
 
 -   Create nk config `./.nk.yml`
