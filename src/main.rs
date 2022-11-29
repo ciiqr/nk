@@ -15,7 +15,7 @@ mod utils;
 mod vars;
 
 use args::{parse_args, Subcommand};
-use commands::{help, plugin, provision, resolve, version};
+use commands::{help, link, plugin, provision, resolve, version};
 use config::Config;
 use std::process::ExitCode;
 
@@ -35,6 +35,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     match arguments.subcommand {
         Subcommand::Provision { args } => provision(args, config?).await,
         Subcommand::Resolve { args } => resolve(args, config?).await,
+        Subcommand::Link { args } => link(args),
         Subcommand::Plugin { args } => plugin(args),
         Subcommand::Help => help(),
         Subcommand::Version => version(),

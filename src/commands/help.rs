@@ -3,6 +3,7 @@ const USAGE: &str = indoc::indoc! {"
     usage: nk [<global>...] <command> [<args>...]
       nk p|provision [--show-unchanged]
       nk r|resolve [--no-render] [--output yaml|json]
+      nk link <path>
       nk h|help
       nk v|version
       nk plugin bash

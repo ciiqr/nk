@@ -1,7 +1,9 @@
 use std::{path::PathBuf, str::FromStr};
 
 use crate::{
-    commands::{PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs, ResolveOutputFormat},
+    commands::{
+        LinkArgs, PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs, ResolveOutputFormat,
+    },
     extensions::{PicoArgsExt, VecOsStringToStringExt},
 };
 
@@ -19,6 +21,7 @@ pub struct GlobalArguments {
 pub enum Subcommand {
     Provision { args: ProvisionArgs },
     Resolve { args: ResolveArgs },
+    Link { args: LinkArgs },
     Plugin { args: PluginArgs },
     Help,
     Version,
@@ -82,6 +85,14 @@ fn parse_subcommand(
                         format => Err(format!("invalid output format: {}", format)),
                     })?
                     .unwrap_or(ResolveOutputFormat::Yaml),
+            },
+        }),
+        Some("link") => Ok(Subcommand::Link {
+            args: LinkArgs {
+                path: pargs.free_from_str::<PathBuf>().map_err(|e| match e {
+                    pico_args::Error::MissingArgument => "missing argument <path>".into(),
+                    e => e.to_string(),
+                })?,
             },
         }),
         Some("plugin") => Ok(Subcommand::Plugin {
