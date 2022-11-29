@@ -31,8 +31,37 @@ nk::install::identify_arch() {
     esac
 }
 
-# TODO: need optional parameter: --version 'v0.4.0' (default to latest)
+nk::install::usage() {
+    echo 'usage: nk-install [--version <version>]'
+    echo ''
+    echo 'options:'
+    echo '  --version <version> version tag ie. "v0.16.0"'
+}
+
+nk::install::parse_cli_args() {
+    while [[ "$#" -gt 0 ]]; do
+        case "$1" in
+            --version)
+                version="$2"
+                shift
+                ;;
+            -h | --help)
+                nk::install::usage
+                exit 0
+                ;;
+            *)
+                echo "nk-install: unrecognized option $1" 1>&2
+                nk::install::usage 1>&2
+                return 1
+                ;;
+        esac
+        shift
+    done
+}
+
 declare version='latest'
+
+nk::install::parse_cli_args "$@"
 
 echo '==> identifying os/arch'
 
