@@ -12,12 +12,17 @@ packages = [
     "jq",
 ]
 
+[[env]]
+name = "PATH"
+prefix = "${PRJ_ROOT}/.cargo/bin"
+
 # TODO: may want to check if these things are setup first... (or find some other way to make them quiet)
 [devshell.startup.rust]
 text = """
 rustup default stable
 rustup component add rust-src
-cargo install cargo-edit --quiet
+# TODO: maybe set install.root in the config (.cargo/config.toml) instead of specifying this here. https://doc.rust-lang.org/cargo/commands/cargo-install.html#description
+cargo install --root ./.cargo --quiet cargo-edit
 """
 
 [devshell.startup.git-hooks]

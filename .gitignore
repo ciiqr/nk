@@ -7,3 +7,4 @@
 
 # nix
 /.direnv/
+/.cargo/
