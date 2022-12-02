@@ -78,8 +78,7 @@ pub async fn provision(
                                 Ok(())
                             }
                             (ProvisionStateStatus::Success, true) => {
-                                // TODO: changed/unchanged should probably have different prefix but same colour?
-                                println!("{}", style(format!("x {}", o.description)).green());
+                                println!("{}", style(format!("- {}", o.description)).color256(208));
                                 Ok(())
                             }
                             (ProvisionStateStatus::Failed, _) => {
