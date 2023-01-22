@@ -14,7 +14,7 @@ jobs:
             path: target/release/nk
             artifact: nk-macos-x86_64
           - os: ubuntu-latest
-            path: target/x86_64-unknown-linux-gnu/release/nk
+            path: target/x86_64-unknown-linux-musl/release/nk
             artifact: nk-linux-x86_64
           - os: windows-latest
             path: target/release/nk.exe
@@ -22,16 +22,22 @@ jobs:
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: actions/checkout@v3
+      - name: Setup musl
+        run: |
+          rustup target add x86_64-unknown-linux-musl
+          sudo apt-get install -y musl-tools
+        if: runner.os == 'Linux'
+      - name: Build
+        env:
+          LDFLAGS: -Wl,--copy-dt-needed-entries
+          RUSTFLAGS: -C target-feature=+crt-static
+        run: cargo build --release --target x86_64-unknown-linux-musl
+        if: runner.os == 'Linux'
       - name: Build
         run: cargo build --release
         if: runner.os != 'Linux'
-      - name: Build
-        run: |
-          # TODO: re-enable static linking & fix error adding symbols: DSO missing from command line
-          # RUSTFLAGS='-C target-feature=+crt-static'
-          # RUSTFLAGS='-C target-feature=+crt-static -C link-args=-Wl,--copy-dt-needed-entries'
-          cargo build --release --target x86_64-unknown-linux-gnu
-        if: runner.os == 'Linux'
+      - name: Print version
+        run: ${{ matrix.build.path }} version
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:

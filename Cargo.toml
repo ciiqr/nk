@@ -42,3 +42,5 @@ futures = "0.3.25"
 # TODO: remove async-std once fixed in async-tar
 async-std = { version = "1.6.0", features = ["unstable"] }
 async-tar = "0.4.2"
+# NOTE: statically link openssl
+openssl = { version = "0.10.45", features = ["vendored"] }
