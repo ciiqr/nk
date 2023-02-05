@@ -14,7 +14,7 @@ const USAGE: &str = indoc::indoc! {"
       -c|--config <config> Override the config file.
 
     args:
-      --show-unchanged Whether to print unchanges results.
+      --show-unchanged Whether to print unchanged results.
       --no-render      To disable rendering of templated values.
       --output         Output format.
 "};

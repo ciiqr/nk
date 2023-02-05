@@ -32,25 +32,25 @@ pub async fn load_plugins(
             .get("distro")
             .ok_or("couldn't find builtin var: distro")?
             .as_str()
-            .ok_or("invalid type for buoltin var: distro")?
+            .ok_or("invalid type for builtin var: distro")?
             .to_string(),
         os: builtin_vars
             .get("os")
             .ok_or("couldn't find builtin var: os")?
             .as_str()
-            .ok_or("invalid type for buoltin var: os")?
+            .ok_or("invalid type for builtin var: os")?
             .to_string(),
         family: builtin_vars
             .get("family")
             .ok_or("couldn't find builtin var: family")?
             .as_str()
-            .ok_or("invalid type for buoltin var: family")?
+            .ok_or("invalid type for builtin var: family")?
             .to_string(),
         arch: builtin_vars
             .get("arch")
             .ok_or("couldn't find builtin var: arch")?
             .as_str()
-            .ok_or("invalid type for buoltin var: arch")?
+            .ok_or("invalid type for builtin var: arch")?
             .to_string(),
     };
 
@@ -64,6 +64,7 @@ pub async fn load_plugins(
                 version,
                 name,
             } => {
+                // TODO: need a way of caching the non-existence of a plugin for the current platform... (something around the plugin_dir so users can detect it and easily fix it)
                 let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
                     format!("~/.nk/plugins/{}", name).as_str(),
                 ))?;

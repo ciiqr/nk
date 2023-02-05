@@ -146,12 +146,45 @@ impl Plugin {
     fn execute<I, S>(&self, args: I) -> std::io::Result<std::process::Child>
     where
         I: IntoIterator<Item = S>,
-        S: AsRef<OsStr>,
+        S: AsRef<OsStr> + std::fmt::Display,
     {
         let plugin_executable = self.get_executable_path();
 
-        Command::new(plugin_executable)
-            .args(args)
+        let mut command = match plugin_executable
+            .extension()
+            .map(|os| os.to_str().unwrap_or(""))
+        {
+            // powershell script
+            Some("ps1") => {
+                let mut cmd = Command::new("powershell");
+                cmd.args([
+                    "-NonInteractive",
+                    "-NoProfile",
+                    "-ExecutionPolicy",
+                    "Bypass",
+                    "-Command",
+                ])
+                .arg(format!(
+                    "$input | {} @args",
+                    plugin_executable.to_string_lossy()
+                ))
+                .args(
+                    // quote args with single quotes & replace inner single quotes with double the single quotes
+                    args.into_iter()
+                        .map(|s| format!("'{}'", format!("{s}").replace('\'', "''"))),
+                );
+
+                cmd
+            }
+            // normal command
+            _ => {
+                let mut cmd = Command::new(plugin_executable);
+                cmd.args(args);
+                cmd
+            }
+        };
+
+        command
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
