@@ -12,19 +12,6 @@ packages = [
     "jq",
 ]
 
-[[env]]
-name = "PATH"
-prefix = "${PRJ_ROOT}/.cargo/bin"
-
-[[env]]
-name = "RUSTUP_HOME"
-eval = "${PRJ_ROOT}/.rustup"
-
-# TODO: maybe set install.root in the config (.cargo/config.toml) instead of specifying this here. https://doc.rust-lang.org/cargo/commands/cargo-install.html#description
-[[env]]
-name = "CARGO_HOME"
-eval = "${PRJ_ROOT}/.cargo"
-
 # TODO: may want to check if these things are setup first... (or find some other way to make them quiet)
 [devshell.startup.rust]
 text = """
