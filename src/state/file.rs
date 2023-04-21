@@ -13,7 +13,6 @@ impl File {
         let contents = std::fs::read_to_string(&path)?;
 
         let groups = serde_yaml::Deserializer::from_str(&contents)
-            .into_iter()
             .map(Group::deserialize)
             .collect::<Result<Vec<_>, _>>()?;
 

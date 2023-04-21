@@ -39,13 +39,7 @@ pub fn resolve(
     // merge in plugin dependencies
     let resolved = plugins
         .iter()
-        .flat_map(|p| {
-            p.definition
-                .dependencies
-                .clone()
-                .into_iter()
-                .map(|(_, d)| d)
-        })
+        .flat_map(|p| p.definition.dependencies.clone().into_values())
         .fold(ResolvedGroup::new(vars), merge_plugin_dependencies);
 
     // merge all groups into into single resolved state
