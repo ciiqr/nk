@@ -25,7 +25,13 @@ pub fn sudo_prompt() -> Result<(), Box<dyn std::error::Error>> {
     let status = Command::new("sudo").args(["true"]).status()?;
 
     if status.success() {
-        Ok(())
+        // now attempt non-interactive
+        let status = Command::new("sudo").args(["-n", "true"]).status()?;
+        if !status.success() {
+            Err("requires either a reasonable sudo timeout (see timestamp_timeout) or passwordless sudo".into())
+        } else {
+            Ok(())
+        }
     } else {
         Err("failed to run sudo".into())
     }
