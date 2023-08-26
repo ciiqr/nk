@@ -143,6 +143,7 @@ impl Plugin {
         Ok(serde_json::Deserializer::from_reader(stdout).into_iter::<ProvisionStateOutput>())
     }
 
+    // TODO: we need to make sure the plugin_executable is executable and give a better error for that case
     fn execute<I, S>(&self, args: I) -> std::io::Result<std::process::Child>
     where
         I: IntoIterator<Item = S>,
