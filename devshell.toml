@@ -12,13 +12,5 @@ packages = [
     "jq",
 ]
 
-# TODO: may want to check if these things are setup first... (or find some other way to make them quiet)
-[devshell.startup.rust]
-text = """
-rustup default stable
-rustup component add rust-src
-cargo install --quiet cargo-edit
-"""
-
 [devshell.startup.git-hooks]
 text = "git config --local core.hookspath .hooks"
