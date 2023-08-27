@@ -44,6 +44,14 @@ config focused configuration management
     nk provision
     ```
 
+## local development
+
+-   install dependencies and configure hooks
+
+```bash
+./scripts/initial-setup.sh
+```
+
 ## resources
 
 -   plugins: [ciiqr/nk-plugins](https://github.com/ciiqr/nk-plugins)
