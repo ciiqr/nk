@@ -1,3 +1,15 @@
+#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![allow(
+    clippy::unnecessary_wraps,
+    clippy::multiple_crate_versions,
+    clippy::uninlined_format_args,
+    clippy::module_name_repetitions,
+    clippy::use_self,
+    clippy::too_many_lines,
+    // TODO: fix:
+    clippy::future_not_send
+)]
+
 mod args;
 mod commands;
 mod config;
@@ -35,8 +47,8 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     match arguments.subcommand {
         Subcommand::Provision { args } => provision(args, config?).await,
         Subcommand::Resolve { args } => resolve(args, config?).await,
-        Subcommand::Link { args } => link(args),
-        Subcommand::Plugin { args } => plugin(args),
+        Subcommand::Link { args } => link(&args),
+        Subcommand::Plugin { args } => plugin(&args),
         Subcommand::Help => help(),
         Subcommand::Version => version(),
     }

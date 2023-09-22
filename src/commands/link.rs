@@ -10,7 +10,7 @@ pub struct LinkArgs {
     pub path: PathBuf,
 }
 
-pub fn link(args: LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
+pub fn link(args: &LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
     // resolve path
     let canonical_path = match args.path.canonicalize() {
         Ok(p) => Ok(p),

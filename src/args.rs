@@ -103,9 +103,8 @@ fn parse_subcommand(
                 })?,
             },
         }),
-        Some("h" | "help") => Ok(Subcommand::Help),
+        Some("h" | "help") | None => Ok(Subcommand::Help),
         Some("v" | "version") => Ok(Subcommand::Version),
         Some(input) => Err(format!("unknown subcommand: {}", input).into()),
-        None => Ok(Subcommand::Help),
     }
 }

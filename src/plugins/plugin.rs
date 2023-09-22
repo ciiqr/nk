@@ -150,39 +150,32 @@ impl Plugin {
         S: AsRef<OsStr> + std::fmt::Display,
     {
         let plugin_executable = self.get_executable_path();
+        let plugin_executable_extension = plugin_executable.extension().unwrap_or_default();
 
-        let mut command = match plugin_executable
-            .extension()
-            .map(|os| os.to_str().unwrap_or(""))
-        {
-            // powershell script
-            Some("ps1") => {
-                let mut cmd = Command::new("powershell");
-                cmd.args([
-                    "-NonInteractive",
-                    "-NoProfile",
-                    "-ExecutionPolicy",
-                    "Bypass",
-                    "-Command",
-                ])
-                .arg(format!(
-                    "$input | {} @args",
-                    plugin_executable.to_string_lossy()
-                ))
-                .args(
-                    // quote args with single quotes & replace inner single quotes with double the single quotes
-                    args.into_iter()
-                        .map(|s| format!("'{}'", format!("{s}").replace('\'', "''"))),
-                );
+        let mut command = if plugin_executable_extension == "ps1" {
+            let mut cmd = Command::new("powershell");
+            cmd.args([
+                "-NonInteractive",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-Command",
+            ])
+            .arg(format!(
+                "$input | {} @args",
+                plugin_executable.to_string_lossy()
+            ))
+            .args(
+                // quote args with single quotes & replace inner single quotes with double the single quotes
+                args.into_iter()
+                    .map(|s| format!("'{}'", format!("{s}").replace('\'', "''"))),
+            );
 
-                cmd
-            }
-            // normal command
-            _ => {
-                let mut cmd = Command::new(plugin_executable);
-                cmd.args(args);
-                cmd
-            }
+            cmd
+        } else {
+            let mut cmd = Command::new(plugin_executable);
+            cmd.args(args);
+            cmd
         };
 
         command

@@ -43,7 +43,7 @@ fn get_current_machine(
     config: &Config,
     hostname: &str,
 ) -> Result<Machine, Box<dyn std::error::Error>> {
-    let machine = config.machine.to_owned().unwrap_or_else(|| hostname.into());
+    let machine = config.machine.clone().unwrap_or_else(|| hostname.into());
 
     Ok(config
         .machines
@@ -95,7 +95,6 @@ fn get_distro_var() -> Result<Value, Box<dyn std::error::Error>> {
         Type::SUSE => "suse",
         Type::Ubuntu => "ubuntu",
         Type::Windows => "windows",
-        Type::Unknown => "unknown",
         _ => "unknown",
     };
 

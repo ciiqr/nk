@@ -19,7 +19,7 @@ pub fn resolve(
     builtin_vars: &HashMap<String, Value>,
     evaluator: &Evaluator,
     plugins: &[Plugin],
-    options: ResolveOptions,
+    options: &ResolveOptions,
 ) -> Result<ResolvedGroup, Box<dyn std::error::Error>> {
     // find all state files for this machine
     let files = state::File::find_all(&config.sources)?;
@@ -46,8 +46,9 @@ pub fn resolve(
     let resolved = groups.into_iter().fold(resolved, merge_groups);
 
     // render resolved
-    Ok(match options.render {
-        true => render_group(resolved)?,
-        false => resolved,
-    })
+    if options.render {
+        Ok(render_group(resolved)?)
+    } else {
+        Ok(resolved)
+    }
 }

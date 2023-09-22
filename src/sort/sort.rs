@@ -16,13 +16,15 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
             .collect::<Vec<_>>();
 
         for declaration in declarations {
-            let new_plugin_names = match plugin_names_by_declaration.remove(&declaration) {
-                Some(mut plugin_names) => {
-                    plugin_names.push(plugin.definition.name.clone());
-                    plugin_names
-                }
-                None => vec![plugin.definition.name.clone()],
-            };
+            let new_plugin_names = plugin_names_by_declaration
+                .remove(&declaration)
+                .map_or_else(
+                    || vec![plugin.definition.name.clone()],
+                    |mut plugin_names| {
+                        plugin_names.push(plugin.definition.name.clone());
+                        plugin_names
+                    },
+                );
 
             plugin_names_by_declaration.insert(declaration, new_plugin_names);
         }

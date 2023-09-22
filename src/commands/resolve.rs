@@ -31,7 +31,7 @@ pub async fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn st
         &builtin_vars,
         &evaluator,
         &plugins,
-        ResolveOptions {
+        &ResolveOptions {
             render: args.render,
         },
     )?;

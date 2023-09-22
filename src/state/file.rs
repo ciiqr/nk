@@ -1,6 +1,6 @@
 use super::Group;
 use serde::Deserialize;
-use std::path::PathBuf;
+use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Debug)]
 pub struct File {
@@ -34,12 +34,10 @@ impl File {
             let path = dir_entry.path();
             let extension = path
                 .extension()
-                .map(|x| x.to_owned())
-                .unwrap_or_else(|| "".into());
+                .map_or_else(|| "".into(), ToOwned::to_owned);
             let lossy_file_stem = path
                 .file_stem()
-                .map(|x| x.to_string_lossy())
-                .unwrap_or_else(|| "".into());
+                .map_or_else(|| "".into(), OsStr::to_string_lossy);
 
             if metadata.is_file() && extension == "yml" && !lossy_file_stem.starts_with('.') {
                 source_files.push(File::from_path(path)?);

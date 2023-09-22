@@ -81,7 +81,7 @@ pub async fn load_plugins(
 
                         Version::Version(latest.tag_name)
                     }
-                    v => v.clone(),
+                    v @ Version::Version(_) => v.clone(),
                 };
 
                 // download/update plugin
@@ -163,7 +163,7 @@ pub async fn load_plugins(
             }
         })
         // TODO: this filters permission errors too, fix this (we should only ignore the directory not existing...)
-        .filter_map(|r| r.ok())
+        .filter_map(Result::ok)
         .map(|(i, p)| Plugin::from_config(p, i))
         .collect::<Result<_, _>>()?;
 

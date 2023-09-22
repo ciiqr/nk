@@ -10,7 +10,7 @@ pub struct PluginArgs {
     pub subcommand: PluginSubcommand,
 }
 
-pub fn plugin(args: PluginArgs) -> Result<(), Box<dyn std::error::Error>> {
+pub fn plugin(args: &PluginArgs) -> Result<(), Box<dyn std::error::Error>> {
     match args.subcommand {
         PluginSubcommand::Bash => {
             println!("{}", BASH_PLUGIN_UTILITIES);

@@ -105,7 +105,7 @@ impl Evaluator {
     pub fn match_states_to_plugins(
         &self,
         declarations: &HashMap<String, state::Declaration>,
-        plugins: Vec<Plugin>,
+        plugins: &[Plugin],
     ) -> Result<ExecutionSets, Box<dyn std::error::Error>> {
         let mut execution_sets: HashMap<Plugin, Vec<DeclaredState>> = HashMap::new();
 
@@ -117,7 +117,7 @@ impl Evaluator {
 
                 // TODO: clean up this code
                 let mut matching_plugin = None;
-                for plugin in &plugins {
+                for plugin in plugins {
                     match self.eval_conditions(&plugin.definition.provision.when, &mut scope) {
                         Ok(true) => {
                             matching_plugin = Some(plugin);

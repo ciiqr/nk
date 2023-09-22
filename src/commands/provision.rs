@@ -43,11 +43,11 @@ pub async fn provision(
         &builtin_vars,
         &evaluator,
         &plugins,
-        ResolveOptions { render: true },
+        &ResolveOptions { render: true },
     )?;
 
     // match each state to a plugin (group states by their matching plugin)
-    let mut execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, plugins)?;
+    let mut execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, &plugins)?;
 
     // sort execution sets
     sort_execution_sets(&mut execution_sets);
@@ -114,9 +114,9 @@ pub async fn provision(
     // TODO: ugh...
     if provision_results
         .iter()
-        .any(|pr| pr.iter().any(|r| r.iter().any(|r| r.is_err())))
+        .any(|pr| pr.iter().any(|r| r.iter().any(Result::is_err)))
     {
-        Err("provisioning failed...")?
+        return Err("provisioning failed...")?;
     }
 
     Ok(())

@@ -107,9 +107,9 @@ impl<'de> Deserialize<'de> for PluginSource {
                     (Some(owner), Some(repo), version, Some(name)) => Ok(PluginSource::Github {
                         owner: owner.as_str().to_string(),
                         repo: repo.as_str().to_string(),
-                        version: version
-                            .map(|v| Version::Version(v.as_str().to_string()))
-                            .unwrap_or(Version::Latest),
+                        version: version.map_or(Version::Latest, |v| {
+                            Version::Version(v.as_str().to_string())
+                        }),
                         name: name.as_str().to_string(),
                     }),
                     _ => Err(D::Error::custom(format!(
