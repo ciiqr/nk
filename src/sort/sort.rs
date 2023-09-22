@@ -7,7 +7,8 @@ use crate::eval::ExecutionSets;
 
 pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
     // collect plugin names by the declarations they provision
-    let mut plugin_names_by_declaration: HashMap<String, Vec<String>> = HashMap::new();
+    let mut plugin_names_by_declaration: HashMap<String, Vec<String>> =
+        HashMap::new();
     for (plugin, states) in &*execution_sets {
         let declarations = states
             .iter()
@@ -37,9 +38,14 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
 
         for declaration in &plugin.definition.after {
             // TODO: debugging level log if we don't match
-            if let Some(dependent_plugin_names) = plugin_names_by_declaration.get(declaration) {
+            if let Some(dependent_plugin_names) =
+                plugin_names_by_declaration.get(declaration)
+            {
                 for dependent_plugin_name in dependent_plugin_names {
-                    ts.add_dependency(dependent_plugin_name, plugin.definition.name.clone());
+                    ts.add_dependency(
+                        dependent_plugin_name,
+                        plugin.definition.name.clone(),
+                    );
                 }
             }
         }
@@ -52,7 +58,9 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
             .iter()
             .map(|(p, _)| p)
             .find(|p| p.definition.name == *name)
-            .unwrap_or_else(|| unreachable!("plugin not found in execution sets"))
+            .unwrap_or_else(|| {
+                unreachable!("plugin not found in execution sets")
+            })
             .config_index
     });
 
@@ -66,6 +74,8 @@ pub fn sort_execution_sets(execution_sets: &mut ExecutionSets) {
         plugin_order
             .iter()
             .position(|p| *p == plugin.definition.name)
-            .unwrap_or_else(|| unreachable!("plugin position not found in plugin order list"))
+            .unwrap_or_else(|| {
+                unreachable!("plugin position not found in plugin order list")
+            })
     });
 }

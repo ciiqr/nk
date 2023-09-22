@@ -86,7 +86,8 @@ pub async fn load_plugins(
 
                 // download/update plugin
                 let exists = plugin_dir.try_exists()?;
-                if !exists || current_version(&plugin_dir)? != expected_version {
+                if !exists || current_version(&plugin_dir)? != expected_version
+                {
                     let release = get_release(owner, repo, version).await?;
 
                     // determine asset to download
@@ -114,7 +115,8 @@ pub async fn load_plugins(
                         }
 
                         // download asset
-                        let response = reqwest::get(asset.browser_download_url).await?;
+                        let response =
+                            reqwest::get(asset.browser_download_url).await?;
                         let reader = response
                             .bytes_stream()
                             .map_err(|e| io::Error::new(ErrorKind::Other, e))
@@ -141,24 +143,30 @@ pub async fn load_plugins(
         .plugins
         .iter()
         .enumerate()
-        .map::<Result<_, Box<dyn std::error::Error>>, _>(|(i, p)| match &p.source {
-            PluginSource::Local { source: _ } => Ok((i, p)),
-            PluginSource::Github {
-                owner: _,
-                repo: _,
-                version: _,
-                name,
-            } => {
-                let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
-                    format!("~/.nk/plugins/{}", name).as_str(),
-                ))?;
+        .map::<Result<_, Box<dyn std::error::Error>>, _>(|(i, p)| {
+            match &p.source {
+                PluginSource::Local { source: _ } => Ok((i, p)),
+                PluginSource::Github {
+                    owner: _,
+                    repo: _,
+                    version: _,
+                    name,
+                } => {
+                    let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
+                        format!("~/.nk/plugins/{}", name).as_str(),
+                    ))?;
 
-                let exists = plugin_dir.try_exists()?;
+                    let exists = plugin_dir.try_exists()?;
 
-                if exists {
-                    Ok((i, p))
-                } else {
-                    Err(format!("{} doesn't exist", plugin_dir.to_string_lossy()).into())
+                    if exists {
+                        Ok((i, p))
+                    } else {
+                        Err(format!(
+                            "{} doesn't exist",
+                            plugin_dir.to_string_lossy()
+                        )
+                        .into())
+                    }
                 }
             }
         })
@@ -173,7 +181,9 @@ pub async fn load_plugins(
     Ok(plugins)
 }
 
-fn current_version(plugin_dir: &Path) -> Result<Version, Box<dyn std::error::Error>> {
+fn current_version(
+    plugin_dir: &Path,
+) -> Result<Version, Box<dyn std::error::Error>> {
     let version_file = plugin_dir.join(".nk_version");
     Ok(Version::Version(read_to_string(version_file)?))
 }
@@ -242,7 +252,8 @@ async fn get_release(
             Ok(release)
         }
         Version::Version(v) => {
-            let release = octocrab.repos(owner, repo).releases().get_by_tag(v).await?;
+            let release =
+                octocrab.repos(owner, repo).releases().get_by_tag(v).await?;
 
             // cache release
             RELEASE_CACHE

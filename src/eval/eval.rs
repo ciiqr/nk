@@ -30,7 +30,9 @@ impl Evaluator {
         // setup engine
         let mut engine = Engine::new();
         #[allow(deprecated)]
-        engine.on_var(move |name, _index, _context| Ok(global_scope.get_value(name)));
+        engine.on_var(move |name, _index, _context| {
+            Ok(global_scope.get_value(name))
+        });
 
         Evaluator { engine }
     }
@@ -67,8 +69,8 @@ impl Evaluator {
                     .map(|g| (g, f.path.clone()))
                     .collect::<Vec<(_, _)>>()
             })
-            .filter_map(
-                |(g, p)| match self.eval_conditions(&g.when, &mut rhai::Scope::new()) {
+            .filter_map(|(g, p)| {
+                match self.eval_conditions(&g.when, &mut rhai::Scope::new()) {
                     Ok(false) => None,
                     Ok(true) => Some(Ok(g)),
                     Err(e) => Some(Err(format!(
@@ -78,8 +80,8 @@ impl Evaluator {
                         p.display()
                     )
                     .into())),
-                },
-            )
+                }
+            })
             .collect()
     }
 
@@ -90,7 +92,9 @@ impl Evaluator {
         let mut filtered_plugins = Vec::new();
 
         for plugin in plugins {
-            match self.eval_conditions(&plugin.definition.when, &mut Scope::new()) {
+            match self
+                .eval_conditions(&plugin.definition.when, &mut Scope::new())
+            {
                 Ok(true) => {
                     filtered_plugins.push(plugin);
                 }
@@ -107,18 +111,25 @@ impl Evaluator {
         declarations: &HashMap<String, state::Declaration>,
         plugins: &[Plugin],
     ) -> Result<ExecutionSets, Box<dyn std::error::Error>> {
-        let mut execution_sets: HashMap<Plugin, Vec<DeclaredState>> = HashMap::new();
+        let mut execution_sets: HashMap<Plugin, Vec<DeclaredState>> =
+            HashMap::new();
 
         for declaration in declarations.values() {
             for state in declaration.states.clone() {
                 let mut scope = Scope::new();
                 scope.push_constant("declaration", declaration.name.clone());
-                scope.push_constant_dynamic("state", rhai::serde::to_dynamic(state.clone())?);
+                scope.push_constant_dynamic(
+                    "state",
+                    rhai::serde::to_dynamic(state.clone())?,
+                );
 
                 // TODO: clean up this code
                 let mut matching_plugin = None;
                 for plugin in plugins {
-                    match self.eval_conditions(&plugin.definition.provision.when, &mut scope) {
+                    match self.eval_conditions(
+                        &plugin.definition.provision.when,
+                        &mut scope,
+                    ) {
                         Ok(true) => {
                             matching_plugin = Some(plugin);
                             break;
@@ -132,10 +143,13 @@ impl Evaluator {
                         declaration: declaration.name.clone(),
                         state,
                     };
-                    if let Some((_, v)) = execution_sets.iter_mut().find(|(p, _)| *p == plugin) {
+                    if let Some((_, v)) =
+                        execution_sets.iter_mut().find(|(p, _)| *p == plugin)
+                    {
                         v.push(declared_state);
                     } else {
-                        execution_sets.insert(plugin.clone(), vec![declared_state]);
+                        execution_sets
+                            .insert(plugin.clone(), vec![declared_state]);
                     }
                 } else {
                     // TODO: would prefer to handle the logging for this in provision

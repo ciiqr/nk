@@ -24,7 +24,9 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new(arguments: &Arguments) -> Result<Config, Box<dyn std::error::Error>> {
+    pub fn new(
+        arguments: &Arguments,
+    ) -> Result<Config, Box<dyn std::error::Error>> {
         // TODO: provide a better error when config file doesn't exist
         let local_path = &PathBuf::from_str(".nk.yml")?;
         let path = arguments
@@ -78,7 +80,8 @@ pub enum PluginSource {
 }
 
 lazy_static! {
-    static ref GITHUB_PLUGIN_REGEX: Regex = Regex::new(r"^(.+?)/(.+?)(@(.+))?#(.*)$").unwrap();
+    static ref GITHUB_PLUGIN_REGEX: Regex =
+        Regex::new(r"^(.+?)/(.+?)(@(.+))?#(.*)$").unwrap();
 }
 
 impl<'de> Deserialize<'de> for PluginSource {
@@ -94,9 +97,13 @@ impl<'de> Deserialize<'de> for PluginSource {
                     .map_err(D::Error::custom)?,
             }),
             Some(_) | None => {
-                let captures = GITHUB_PLUGIN_REGEX.captures(&source).ok_or_else(|| {
-                    D::Error::custom(format!("Unrecognized plugin source: {}", source))
-                })?;
+                let captures =
+                    GITHUB_PLUGIN_REGEX.captures(&source).ok_or_else(|| {
+                        D::Error::custom(format!(
+                            "Unrecognized plugin source: {}",
+                            source
+                        ))
+                    })?;
 
                 match (
                     captures.get(1),
@@ -104,14 +111,16 @@ impl<'de> Deserialize<'de> for PluginSource {
                     captures.get(4),
                     captures.get(5),
                 ) {
-                    (Some(owner), Some(repo), version, Some(name)) => Ok(PluginSource::Github {
-                        owner: owner.as_str().to_string(),
-                        repo: repo.as_str().to_string(),
-                        version: version.map_or(Version::Latest, |v| {
-                            Version::Version(v.as_str().to_string())
-                        }),
-                        name: name.as_str().to_string(),
-                    }),
+                    (Some(owner), Some(repo), version, Some(name)) => {
+                        Ok(PluginSource::Github {
+                            owner: owner.as_str().to_string(),
+                            repo: repo.as_str().to_string(),
+                            version: version.map_or(Version::Latest, |v| {
+                                Version::Version(v.as_str().to_string())
+                            }),
+                            name: name.as_str().to_string(),
+                        })
+                    }
                     _ => Err(D::Error::custom(format!(
                         "Unrecognized plugin source: {}",
                         source
@@ -130,7 +139,9 @@ where
     // TODO: maybe std::path::absolute once stable?
     paths
         .iter()
-        .map(|s| PathBuf::from_str(&shellexpand::tilde(&s)).map_err(D::Error::custom))
+        .map(|s| {
+            PathBuf::from_str(&shellexpand::tilde(&s)).map_err(D::Error::custom)
+        })
         // TODO: maybe consider partitioning and showing all the errors instead...
         .collect::<Result<Vec<_>, _>>()
 }

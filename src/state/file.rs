@@ -9,7 +9,9 @@ pub struct File {
 }
 
 impl File {
-    pub fn from_path(path: PathBuf) -> Result<File, Box<dyn std::error::Error>> {
+    pub fn from_path(
+        path: PathBuf,
+    ) -> Result<File, Box<dyn std::error::Error>> {
         let contents = std::fs::read_to_string(&path)?;
 
         let groups = serde_yaml::Deserializer::from_str(&contents)
@@ -19,7 +21,9 @@ impl File {
         Ok(File { path, groups })
     }
 
-    fn find_all_in_dir(directory: &PathBuf) -> Result<Vec<File>, Box<dyn std::error::Error>> {
+    fn find_all_in_dir(
+        directory: &PathBuf,
+    ) -> Result<Vec<File>, Box<dyn std::error::Error>> {
         let mut source_files: Vec<File> = vec![];
 
         // TODO: may want to make sources optional? (can always log missing directories)
@@ -39,7 +43,10 @@ impl File {
                 .file_stem()
                 .map_or_else(|| "".into(), OsStr::to_string_lossy);
 
-            if metadata.is_file() && extension == "yml" && !lossy_file_stem.starts_with('.') {
+            if metadata.is_file()
+                && extension == "yml"
+                && !lossy_file_stem.starts_with('.')
+            {
                 source_files.push(File::from_path(path)?);
             } else {
                 // TODO: likely ignore, but log (debug level)
@@ -48,12 +55,15 @@ impl File {
         }
 
         // sort files (within each source), so all files from one source are alphabetical and before any of the files from the next source)
-        source_files.sort_by(|a, b| a.path.file_name().cmp(&b.path.file_name()));
+        source_files
+            .sort_by(|a, b| a.path.file_name().cmp(&b.path.file_name()));
 
         Ok(source_files)
     }
 
-    pub fn find_all(sources: &[PathBuf]) -> Result<Vec<File>, Box<dyn std::error::Error>> {
+    pub fn find_all(
+        sources: &[PathBuf],
+    ) -> Result<Vec<File>, Box<dyn std::error::Error>> {
         let mut files: Vec<File> = vec![];
 
         // top level

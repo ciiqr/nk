@@ -27,7 +27,10 @@ where
     {
         type Value = Vec<Target>;
 
-        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+        fn expecting(
+            &self,
+            formatter: &mut core::fmt::Formatter,
+        ) -> core::fmt::Result {
             formatter.write_str("a map")
         }
 
@@ -37,7 +40,9 @@ where
         {
             let mut map = Vec::with_capacity(access.size_hint().unwrap_or(0));
 
-            while let Some((name, value)) = access.next_entry::<String, Raw>()? {
+            while let Some((name, value)) =
+                access.next_entry::<String, Raw>()?
+            {
                 map.push(value.into_with_name(name));
             }
 
@@ -65,7 +70,10 @@ where
     {
         type Value = HashMap<String, Target>;
 
-        fn expecting(&self, formatter: &mut core::fmt::Formatter) -> core::fmt::Result {
+        fn expecting(
+            &self,
+            formatter: &mut core::fmt::Formatter,
+        ) -> core::fmt::Result {
             formatter.write_str("a map")
         }
 
@@ -73,9 +81,12 @@ where
         where
             M: MapAccess<'de>,
         {
-            let mut map = HashMap::with_capacity(access.size_hint().unwrap_or(0));
+            let mut map =
+                HashMap::with_capacity(access.size_hint().unwrap_or(0));
 
-            while let Some((name, value)) = access.next_entry::<String, Raw>()? {
+            while let Some((name, value)) =
+                access.next_entry::<String, Raw>()?
+            {
                 map.insert(name.clone(), value.into_with_name(name));
             }
 

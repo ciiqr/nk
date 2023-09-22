@@ -21,7 +21,9 @@ impl<'reg> TemplatingEngine<'reg> {
     }
 }
 
-pub fn render_group(group: ResolvedGroup) -> Result<ResolvedGroup, Box<dyn std::error::Error>> {
+pub fn render_group(
+    group: ResolvedGroup,
+) -> Result<ResolvedGroup, Box<dyn std::error::Error>> {
     let engine = TemplatingEngine::new(group.vars.clone());
 
     let declarations = group

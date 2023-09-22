@@ -140,7 +140,8 @@ impl Plugin {
 
         // TODO: include plugin information in iterator?
         // TODO: do something with stderr (include in iterator & log in error states?)
-        Ok(serde_json::Deserializer::from_reader(stdout).into_iter::<ProvisionStateOutput>())
+        Ok(serde_json::Deserializer::from_reader(stdout)
+            .into_iter::<ProvisionStateOutput>())
     }
 
     // TODO: we need to make sure the plugin_executable is executable and give a better error for that case
@@ -150,7 +151,8 @@ impl Plugin {
         S: AsRef<OsStr> + std::fmt::Display,
     {
         let plugin_executable = self.get_executable_path();
-        let plugin_executable_extension = plugin_executable.extension().unwrap_or_default();
+        let plugin_executable_extension =
+            plugin_executable.extension().unwrap_or_default();
 
         let mut command = if plugin_executable_extension == "ps1" {
             let mut cmd = Command::new("powershell");
@@ -167,8 +169,9 @@ impl Plugin {
             ))
             .args(
                 // quote args with single quotes & replace inner single quotes with double the single quotes
-                args.into_iter()
-                    .map(|s| format!("'{}'", format!("{s}").replace('\'', "''"))),
+                args.into_iter().map(|s| {
+                    format!("'{}'", format!("{s}").replace('\'', "''"))
+                }),
             );
 
             cmd

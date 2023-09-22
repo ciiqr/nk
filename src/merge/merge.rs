@@ -1,7 +1,10 @@
 use crate::state::{self, ResolvedGroup};
 use serde_yaml::Value;
 
-pub fn merge_plugin_dependencies(mut a: ResolvedGroup, b: state::Declaration) -> ResolvedGroup {
+pub fn merge_plugin_dependencies(
+    mut a: ResolvedGroup,
+    b: state::Declaration,
+) -> ResolvedGroup {
     let name = b.name.clone();
     let declaration = match a.declarations.remove(&b.name) {
         Some(d) => merge_declarations(d, b),
@@ -35,7 +38,10 @@ pub fn merge_groups(mut a: ResolvedGroup, b: state::Group) -> ResolvedGroup {
     a
 }
 
-fn merge_declarations(mut a: state::Declaration, mut b: state::Declaration) -> state::Declaration {
+fn merge_declarations(
+    mut a: state::Declaration,
+    mut b: state::Declaration,
+) -> state::Declaration {
     a.states.append(&mut b.states);
     a
 }

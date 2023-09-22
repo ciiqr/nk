@@ -47,7 +47,8 @@ pub async fn provision(
     )?;
 
     // match each state to a plugin (group states by their matching plugin)
-    let mut execution_sets = evaluator.match_states_to_plugins(&resolved.declarations, &plugins)?;
+    let mut execution_sets =
+        evaluator.match_states_to_plugins(&resolved.declarations, &plugins)?;
 
     // sort execution sets
     sort_execution_sets(&mut execution_sets);
@@ -72,19 +73,33 @@ pub async fn provision(
                         match (o.status, o.changed) {
                             (ProvisionStateStatus::Success, false) => {
                                 if args.show_unchanged {
-                                    println!("{}", style(format!("x {}", o.description)).green());
+                                    println!(
+                                        "{}",
+                                        style(format!("x {}", o.description))
+                                            .green()
+                                    );
                                 };
 
                                 Ok(())
                             }
                             (ProvisionStateStatus::Success, true) => {
-                                println!("{}", style(format!("- {}", o.description)).color256(208));
+                                println!(
+                                    "{}",
+                                    style(format!("- {}", o.description))
+                                        .color256(208)
+                                );
                                 Ok(())
                             }
                             (ProvisionStateStatus::Failed, _) => {
-                                println!("{}", style(format!("! {}", o.description)).red());
+                                println!(
+                                    "{}",
+                                    style(format!("! {}", o.description)).red()
+                                );
                                 // TODO: can we get the terminal tab size?
-                                println!("{}", indent(o.output.as_str(), "    "));
+                                println!(
+                                    "{}",
+                                    indent(o.output.as_str(), "    ")
+                                );
                                 Err("provisioning failed".to_string()) // TODO: idk about this message...
                             }
                         }

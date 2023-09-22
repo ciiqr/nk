@@ -1,6 +1,7 @@
 use crate::{
-    config::Config, eval::Evaluator, plugins::load_plugins, resolve::resolve as resolveState,
-    resolve::ResolveOptions, vars::get_builtin_vars,
+    config::Config, eval::Evaluator, plugins::load_plugins,
+    resolve::resolve as resolveState, resolve::ResolveOptions,
+    vars::get_builtin_vars,
 };
 
 #[derive(Debug)]
@@ -15,7 +16,10 @@ pub struct ResolveArgs {
 }
 
 // TODO: wrap most errors in our own, more user friendly error
-pub async fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn resolve(
+    args: ResolveArgs,
+    config: Config,
+) -> Result<(), Box<dyn std::error::Error>> {
     // initialize builtin vars
     let builtin_vars = get_builtin_vars(&config)?;
 
@@ -38,8 +42,12 @@ pub async fn resolve(args: ResolveArgs, config: Config) -> Result<(), Box<dyn st
 
     // print state
     match args.output {
-        ResolveOutputFormat::Yaml => print!("{}", serde_yaml::to_string(&resolved)?),
-        ResolveOutputFormat::Json => println!("{}", serde_json::to_string(&resolved)?),
+        ResolveOutputFormat::Yaml => {
+            print!("{}", serde_yaml::to_string(&resolved)?);
+        }
+        ResolveOutputFormat::Json => {
+            println!("{}", serde_json::to_string(&resolved)?);
+        }
     };
 
     Ok(())

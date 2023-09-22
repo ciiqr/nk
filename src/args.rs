@@ -2,7 +2,8 @@ use std::{path::PathBuf, str::FromStr};
 
 use crate::{
     commands::{
-        LinkArgs, PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs, ResolveOutputFormat,
+        LinkArgs, PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs,
+        ResolveOutputFormat,
     },
     extensions::{PicoArgsExt, VecOsStringToStringExt},
 };
@@ -82,17 +83,23 @@ fn parse_subcommand(
                     .opt_value_from_fn("--output", |format| match format {
                         "yaml" => Ok(ResolveOutputFormat::Yaml),
                         "json" => Ok(ResolveOutputFormat::Json),
-                        format => Err(format!("invalid output format: {}", format)),
+                        format => {
+                            Err(format!("invalid output format: {}", format))
+                        }
                     })?
                     .unwrap_or(ResolveOutputFormat::Yaml),
             },
         }),
         Some("link") => Ok(Subcommand::Link {
             args: LinkArgs {
-                path: pargs.free_from_str::<PathBuf>().map_err(|e| match e {
-                    pico_args::Error::MissingArgument => "missing argument <path>".into(),
-                    e => e.to_string(),
-                })?,
+                path: pargs.free_from_str::<PathBuf>().map_err(
+                    |e| match e {
+                        pico_args::Error::MissingArgument => {
+                            "missing argument <path>".into()
+                        }
+                        e => e.to_string(),
+                    },
+                )?,
             },
         }),
         Some("plugin") => Ok(Subcommand::Plugin {

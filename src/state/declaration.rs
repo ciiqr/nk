@@ -39,7 +39,9 @@ impl Serialize for Declaration {
 }
 
 // NOTE: serde_with::OneOrMany doesn't work here (presumably because we're working with raw values...)
-fn one_or_many<'de, D>(deserializer: D) -> Result<Vec<serde_yaml::Value>, D::Error>
+fn one_or_many<'de, D>(
+    deserializer: D,
+) -> Result<Vec<serde_yaml::Value>, D::Error>
 where
     D: Deserializer<'de>,
 {
