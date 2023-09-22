@@ -36,12 +36,11 @@ impl File {
             let dir_entry = res?;
             let metadata = dir_entry.metadata()?;
             let path = dir_entry.path();
-            let extension = path
-                .extension()
-                .map_or_else(|| "".into(), ToOwned::to_owned);
+            let extension = path.extension().unwrap_or_default();
             let lossy_file_stem = path
                 .file_stem()
-                .map_or_else(|| "".into(), OsStr::to_string_lossy);
+                .map(OsStr::to_string_lossy)
+                .unwrap_or_default();
 
             if metadata.is_file()
                 && extension == "yml"
