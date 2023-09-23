@@ -53,7 +53,7 @@ $bin_directory = "${HOME}\.nk\bin"
 $nk_path = "${bin_directory}\nk.exe"
 
 # create bin directory
-New-Item -ItemType Directory -Force -Path $bin_directory
+[void](New-Item -ItemType Directory -Force -Path $bin_directory)
 
 # determine nk url
 $nk_url = if ($version -ceq 'latest') {
