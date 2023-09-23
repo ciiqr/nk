@@ -73,6 +73,8 @@ os="$(nk::install::identify_os)"
 declare arch
 arch="$(nk::install::identify_arch)"
 
+echo '==> download nk'
+
 # paths
 declare bin_directory="${HOME}/.nk/bin"
 declare nk_path="${bin_directory}/nk"
@@ -80,8 +82,6 @@ declare jq_path="${bin_directory}/jq"
 
 # create bin directory
 mkdir -p "$bin_directory"
-
-echo '==> download nk'
 
 # determine nk url
 declare nk_url
