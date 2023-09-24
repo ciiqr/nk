@@ -48,3 +48,5 @@ async-tar = "0.4.2"
 # NOTE: statically link openssl
 openssl = { version = "0.10.45", features = ["vendored"] }
 clap = { version = "4.4.4", features = ["derive"] }
+clap_complete = "4.4.1"
+faccess = "0.2.4"

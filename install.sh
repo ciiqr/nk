@@ -121,3 +121,7 @@ curl -fsSL "$jq_url" -o "$jq_path"
 
 # make jq executable
 chmod +x "$jq_path"
+
+# create completions
+echo '==> create completions'
+"$nk_path" completion install

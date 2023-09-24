@@ -66,5 +66,13 @@ else {
 # download nk binary
 (New-Object System.Net.WebClient).Downloadfile($nk_url, $nk_path)
 
+Write-Output '==> prepend to path'
+
 # prepend to path
 prepend_to_path -new_path $bin_directory
+
+# TODO: not sure if there's a standard path for this stuff on windows? might just need to tell the user to add it to their powershell profile...
+# Write-Output '==> create powershell completions'
+# # create completions
+# Write-Output '==> create completions'
+# & $nk_path completion install
