@@ -39,7 +39,7 @@ jobs:
         run: cargo build --release
         if: runner.os != 'Linux'
       - name: Print version
-        run: ${{ matrix.build.path }} version
+        run: ${{ matrix.build.path }} --version
       - name: Upload binary
         uses: actions/upload-artifact@v3
         with:
