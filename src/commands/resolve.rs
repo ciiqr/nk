@@ -1,19 +1,12 @@
 use crate::{
-    config::Config, eval::Evaluator, plugins::load_plugins,
-    resolve::resolve as resolveState, resolve::ResolveOptions,
+    args::{ResolveArgs, ResolveOutputFormat},
+    config::Config,
+    eval::Evaluator,
+    plugins::load_plugins,
+    resolve::resolve as resolveState,
+    resolve::ResolveOptions,
     vars::get_builtin_vars,
 };
-
-#[derive(Debug)]
-pub enum ResolveOutputFormat {
-    Yaml,
-    Json,
-}
-#[derive(Debug)]
-pub struct ResolveArgs {
-    pub output: ResolveOutputFormat,
-    pub render: bool,
-}
 
 // TODO: wrap most errors in our own, more user friendly error
 pub async fn resolve(

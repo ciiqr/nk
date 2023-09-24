@@ -1,16 +1,12 @@
 use crate::{
-    extensions::SerdeDeserializeFromYamlPath, plugins::PluginDefinition,
+    args::LinkArgs, extensions::SerdeDeserializeFromYamlPath,
+    plugins::PluginDefinition,
 };
 use std::{
     fs,
     path::{Path, PathBuf},
     str::FromStr,
 };
-
-#[derive(Debug)]
-pub struct LinkArgs {
-    pub path: PathBuf,
-}
 
 pub fn link(args: &LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
     // resolve path

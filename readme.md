@@ -1,6 +1,6 @@
 # nk
 
-config focused configuration management
+configuration management for developers
 
 ## setup
 

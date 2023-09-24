@@ -1,4 +1,5 @@
 use crate::{
+    args::ProvisionArgs,
     config::Config,
     eval::{DeclaredState, Evaluator},
     plugins::{load_plugins, Plugin, ProvisionInfo, ProvisionStateStatus},
@@ -10,11 +11,6 @@ use crate::{
 use console::style;
 use jsonschema::JSONSchema;
 use textwrap::indent;
-
-#[derive(Debug)]
-pub struct ProvisionArgs {
-    pub show_unchanged: bool,
-}
 
 // TODO: wrap most errors in our own, more user friendly error
 pub async fn provision(

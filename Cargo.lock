@@ -414,20 +414,19 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.4.0"
+version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "1d5f1946157a96594eb2d2c10eb7ad9a2b27518cb3000209dec700c35df9197d"
+checksum = "b1d7b8d5ec32af0fadc644bf1fd509a688c2103b185644bb1e29d164e0703136"
 dependencies = [
  "clap_builder",
  "clap_derive",
- "once_cell",
 ]
 
 [[package]]
 name = "clap_builder"
-version = "4.4.0"
+version = "4.4.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "78116e32a042dd73c2901f0dc30790d20ff3447f3e3472fad359e8c3d282bcd6"
+checksum = "5179bb514e4d7c2051749d8fcefa2ed6d06a9f4e6d69faf3805f5d80b8cf8d56"
 dependencies = [
  "anstream",
  "anstyle",
@@ -437,9 +436,9 @@ dependencies = [
 
 [[package]]
 name = "clap_derive"
-version = "4.4.0"
+version = "4.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c9fd1a5729c4548118d7d70ff234a44868d00489a4b6597b0b020918a0e91a1a"
+checksum = "0862016ff20d69b84ef8247369fabf5c008a7417002411897d40ee1f4532b873"
 dependencies = [
  "heck",
  "proc-macro2",
@@ -501,26 +500,6 @@ dependencies = [
  "once_cell",
  "proc-macro-hack",
  "tiny-keccak",
-]
-
-[[package]]
-name = "const_format"
-version = "0.2.31"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c990efc7a285731f9a4378d81aff2f0e85a2c8781a05ef0f8baa8dac54d0ff48"
-dependencies = [
- "const_format_proc_macros",
-]
-
-[[package]]
-name = "const_format_proc_macros"
-version = "0.2.31"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e026b6ce194a874cb9cf32cd5772d1ef9767cc8fcb5765948d74f37a9d8b2bf6"
-dependencies = [
- "proc-macro2",
- "quote",
- "unicode-xid",
 ]
 
 [[package]]
@@ -1442,8 +1421,8 @@ dependencies = [
  "async-compression",
  "async-std",
  "async-tar",
+ "clap",
  "console",
- "const_format",
  "futures",
  "handlebars",
  "home",
@@ -1456,7 +1435,6 @@ dependencies = [
  "octocrab",
  "openssl",
  "os_info",
- "pico-args",
  "regex",
  "reqwest",
  "rhai",
@@ -1763,12 +1741,6 @@ dependencies = [
  "pest",
  "sha2",
 ]
-
-[[package]]
-name = "pico-args"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5be167a7af36ee22fe3115051bc51f6e6c7054c9348e28deb4f49bd6f705a315"
 
 [[package]]
 name = "pin-project"
@@ -2589,12 +2561,6 @@ name = "unicode-width"
 version = "0.1.10"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c0edd1e5b14653f783770bce4a4dabb4a5108a5370a5f5d8cfe8710c361f6c8b"
-
-[[package]]
-name = "unicode-xid"
-version = "0.2.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "unsafe-libyaml"

@@ -1,117 +1,88 @@
-use std::{path::PathBuf, str::FromStr};
+use std::{fmt, path::PathBuf};
 
-use crate::{
-    commands::{
-        LinkArgs, PluginArgs, PluginSubcommand, ProvisionArgs, ResolveArgs,
-        ResolveOutputFormat,
-    },
-    extensions::{PicoArgsExt, VecOsStringToStringExt},
-};
+use clap::{arg, ArgAction, Args, Parser, Subcommand, ValueEnum};
 
+#[derive(Parser)]
+#[command(about, long_about = None, disable_version_flag = true, version)]
 pub struct Arguments {
-    pub global: GlobalArguments,
-    pub subcommand: Subcommand,
-}
-
-pub struct GlobalArguments {
-    pub help: bool,
-    pub version: bool,
+    /// Override the config file.
+    #[arg(short, long, value_name = "file")]
     pub config: Option<PathBuf>,
+
+    #[command(subcommand)]
+    pub command: Option<Commands>,
+
+    // Print version
+    #[arg(
+        short = 'v',
+        short_alias = 'V',
+        long,
+        action = clap::builder::ArgAction::Version,
+    )]
+    version: (),
 }
 
-pub enum Subcommand {
-    Provision { args: ProvisionArgs },
-    Resolve { args: ResolveArgs },
-    Link { args: LinkArgs },
-    Plugin { args: PluginArgs },
-    Help,
-    Version,
+#[derive(Subcommand)]
+pub enum Commands {
+    /// Apply configuration
+    #[command(alias = "p")]
+    Provision(ProvisionArgs),
+
+    /// Output resolved configuration
+    #[command(alias = "r")]
+    Resolve(ResolveArgs),
+
+    /// Link plugin at path
+    Link(LinkArgs),
+
+    /// Scripting language plugin helpers
+    Plugin(PluginArgs),
 }
 
-pub fn parse_args() -> Result<Arguments, Box<dyn std::error::Error>> {
-    let mut pargs = pico_args::Arguments::from_env();
+#[derive(Debug, Args)]
+pub struct ProvisionArgs {
+    /// Whether to print unchanged results.
+    #[arg(short, long)]
+    pub show_unchanged: bool,
+}
 
-    let global = parse_global(&mut pargs);
-    let provided_subcommand = parse_subcommand(&mut pargs)?;
+#[derive(Debug, Clone, ValueEnum)]
+pub enum ResolveOutputFormat {
+    Yaml,
+    Json,
+}
 
-    // NOTE: -h/-v override the provided subcommand
-    // - we still parse it though so its arguments aren't unused
-    let subcommand = if global.help {
-        Subcommand::Help
-    } else if global.version {
-        Subcommand::Version
-    } else {
-        provided_subcommand
-    };
-
-    let remaining = pargs.finish();
-    if !remaining.is_empty() {
-        return Err(format!(
-            "unrecognized arguments: {}",
-            remaining.to_str_vec()?.join(" ")
-        )
-        .into());
+impl fmt::Display for ResolveOutputFormat {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            ResolveOutputFormat::Yaml => write!(f, "yaml"),
+            ResolveOutputFormat::Json => write!(f, "json"),
+        }
     }
-
-    Ok(Arguments { global, subcommand })
 }
 
-fn parse_global(pargs: &mut pico_args::Arguments) -> GlobalArguments {
-    GlobalArguments {
-        help: pargs.contains_any(["-h", "--help"]),
-        version: pargs.contains_any(["-v", "--version"]),
-        config: pargs
-            .opt_value_from_fn(["-c", "--config"], PathBuf::from_str)
-            .unwrap_or(None),
-    }
+#[derive(Debug, Args)]
+pub struct ResolveArgs {
+    #[arg(short, long, value_name = "format", default_value_t = ResolveOutputFormat::Yaml)]
+    pub output: ResolveOutputFormat,
+
+    /// Don't replace templated values
+    #[arg(long = "no-render", default_value_t = true, action = ArgAction::SetFalse)]
+    pub render: bool,
 }
 
-fn parse_subcommand(
-    pargs: &mut pico_args::Arguments,
-) -> Result<Subcommand, Box<dyn std::error::Error>> {
-    match pargs.subcommand()?.as_deref() {
-        Some("p" | "provision") => Ok(Subcommand::Provision {
-            args: ProvisionArgs {
-                show_unchanged: pargs.contains_any("--show-unchanged"),
-            },
-        }),
-        Some("r" | "resolve") => Ok(Subcommand::Resolve {
-            args: ResolveArgs {
-                // TODO: consider --render true|false instead?
-                render: !pargs.contains_any("--no-render"),
-                output: pargs
-                    .opt_value_from_fn("--output", |format| match format {
-                        "yaml" => Ok(ResolveOutputFormat::Yaml),
-                        "json" => Ok(ResolveOutputFormat::Json),
-                        format => {
-                            Err(format!("invalid output format: {}", format))
-                        }
-                    })?
-                    .unwrap_or(ResolveOutputFormat::Yaml),
-            },
-        }),
-        Some("link") => Ok(Subcommand::Link {
-            args: LinkArgs {
-                path: pargs.free_from_str::<PathBuf>().map_err(
-                    |e| match e {
-                        pico_args::Error::MissingArgument => {
-                            "missing argument <path>".into()
-                        }
-                        e => e.to_string(),
-                    },
-                )?,
-            },
-        }),
-        Some("plugin") => Ok(Subcommand::Plugin {
-            args: PluginArgs {
-                subcommand: (match pargs.free_from_str::<String>() {
-                    Ok(_) => Ok(PluginSubcommand::Bash), // NOTE: just assume for now
-                    Err(e) => Err(e),
-                })?,
-            },
-        }),
-        Some("h" | "help") | None => Ok(Subcommand::Help),
-        Some("v" | "version") => Ok(Subcommand::Version),
-        Some(input) => Err(format!("unknown subcommand: {}", input).into()),
-    }
+#[derive(Debug, Args)]
+pub struct LinkArgs {
+    #[arg(value_name = "path")]
+    pub path: PathBuf,
+}
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum PluginLanguage {
+    Bash,
+}
+
+#[derive(Debug, Args)]
+pub struct PluginArgs {
+    pub language: PluginLanguage,
 }

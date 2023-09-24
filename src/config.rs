@@ -30,7 +30,6 @@ impl Config {
         // TODO: provide a better error when config file doesn't exist
         let local_path = &PathBuf::from_str(".nk.yml")?;
         let path = arguments
-            .global
             .config
             .as_ref()
             // TODO: .nk.yml OR ~/.nk.yml? (or merge both?)

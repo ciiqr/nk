@@ -2,7 +2,7 @@
 name = "nk"
 version = "0.20.0"
 edition = "2021"
-description = "config focused configuration management"
+description = "configuration management for developers"
 license = "MIT"
 repository = "https://github.com/ciiqr/nk"
 keywords = ["configuration", "management", "dotfiles"]
@@ -14,8 +14,6 @@ categories = ["command-line-utilities"]
 nix = "0.25.0"
 
 [dependencies]
-pico-args = "0.5.0"
-const_format = "0.2.26"
 indoc = "1.0.7"
 shellexpand = "2.1.2"
 serde = { version = "1.0.145", features = ["derive"] }
@@ -49,3 +47,4 @@ async-std = { version = "1.6.0", features = ["unstable"] }
 async-tar = "0.4.2"
 # NOTE: statically link openssl
 openssl = { version = "0.10.45", features = ["vendored"] }
+clap = { version = "4.4.4", features = ["derive"] }

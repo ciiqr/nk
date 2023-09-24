@@ -26,8 +26,10 @@ mod traits;
 mod utils;
 mod vars;
 
-use args::{parse_args, Subcommand};
-use commands::{help, link, plugin, provision, resolve, version};
+use args::{Arguments, Commands};
+use clap::CommandFactory;
+use clap::Parser;
+use commands::{link, plugin, provision, resolve};
 use config::Config;
 use std::process::ExitCode;
 
@@ -41,15 +43,18 @@ async fn main() -> ExitCode {
 }
 
 async fn run() -> Result<(), Box<dyn std::error::Error>> {
-    let arguments = parse_args()?;
+    let arguments = Arguments::parse();
     let config = Config::new(&arguments);
 
-    match arguments.subcommand {
-        Subcommand::Provision { args } => provision(args, config?).await,
-        Subcommand::Resolve { args } => resolve(args, config?).await,
-        Subcommand::Link { args } => link(&args),
-        Subcommand::Plugin { args } => plugin(&args),
-        Subcommand::Help => help(),
-        Subcommand::Version => version(),
+    match arguments.command {
+        Some(Commands::Provision(args)) => provision(args, config?).await,
+        Some(Commands::Resolve(args)) => resolve(args, config?).await,
+        Some(Commands::Link(args)) => link(&args),
+        Some(Commands::Plugin(args)) => plugin(&args),
+        None => {
+            let mut cmd = Arguments::command();
+            cmd.print_help()?;
+            Ok(())
+        }
     }
 }
