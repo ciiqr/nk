@@ -9,38 +9,37 @@ use std::{
 };
 
 pub fn link(args: &LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
-    // resolve path
-    let canonical_path = match args.path.canonicalize() {
-        Ok(p) => Ok(p),
-        Err(e) => Err(format!("{}: {}", e, args.path.display())),
-    }?;
+    // create nk plugin directory
+    let nk_plugins_dir =
+        PathBuf::from_str(&shellexpand::tilde("~/.nk/plugins"))?;
+    fs::create_dir_all(&nk_plugins_dir)?;
 
-    // load plugin info
-    let definition = {
-        let plugin_yml = args.path.join("plugin.yml");
-        match PluginDefinition::from_yaml_file(&plugin_yml) {
+    for path in &args.paths {
+        // load plugin info
+        let definition = match PluginDefinition::from_yaml_file(path) {
             Ok(val) => Ok(val),
-            Err(e) => Err(format!("{}: {}", e, plugin_yml.display())),
-        }?
-    };
+            Err(e) => Err(format!("{}: {}", e, path.display())),
+        }?;
 
-    let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
-        format!("~/.nk/plugins/{}", definition.name).as_str(),
-    ))?;
+        // delete existing plugin dir
+        let plugin_dir = nk_plugins_dir.join(definition.name);
+        if plugin_dir.try_exists()? {
+            fs::remove_dir_all(&plugin_dir)?;
+        }
 
-    // delete existing plugin dir
-    if plugin_dir.try_exists()? {
-        fs::remove_dir_all(plugin_dir.clone())?;
+        // resolve path to plugin.yml
+        let canonical_path = match path.canonicalize() {
+            Ok(p) => Ok(p),
+            Err(e) => Err(format!("{}: {}", e, path.display())),
+        }?;
+        // get parent of plugin.yml
+        let canonical_parent = canonical_path
+            .parent()
+            .ok_or("could not determine plugin parent")?;
+
+        // link plugin
+        symlink_dir(canonical_parent, plugin_dir)?;
     }
-
-    // make parent dir
-    let parent_dir = plugin_dir
-        .parent()
-        .ok_or("plugin destination parent dir could not be determined")?;
-    fs::create_dir_all(parent_dir)?;
-
-    // link plugin
-    symlink_dir(canonical_path, plugin_dir)?;
 
     Ok(())
 }

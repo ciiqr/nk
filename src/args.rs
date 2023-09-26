@@ -35,6 +35,7 @@ pub enum Commands {
     Resolve(ResolveArgs),
 
     /// Link plugin at path
+    #[command(after_long_help = LINK_HELP.as_str())]
     Link(LinkArgs),
 
     /// Scripting language plugin helpers
@@ -81,6 +82,12 @@ lazy_static! {
             ))
             .collect::<String>()
     );
+    static ref LINK_HELP: String = format!(
+        "{}\n{}\n{}",
+        style("Examples:").underlined().bold(),
+        "  $ nk link ./plugin.yml",
+        "  $ nk link ~/Projects/nk-plugins/*/plugin.yml"
+    );
 }
 
 #[derive(Debug, Args)]
@@ -117,9 +124,9 @@ pub struct ResolveArgs {
 
 #[derive(Debug, Args)]
 pub struct LinkArgs {
-    /// path do a plugin directory (containing a plugin.yml)
-    #[arg(value_name = "path")]
-    pub path: PathBuf,
+    /// path to a plugin.yml file
+    #[arg(value_name = "path", required = true)]
+    pub paths: Vec<PathBuf>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
