@@ -144,8 +144,10 @@ impl Plugin {
             .into_iter::<ProvisionStateOutput>())
     }
 
-    // TODO: we need to make sure the plugin_executable is executable and give a better error for that case
-    fn execute<I, S>(&self, args: I) -> std::io::Result<std::process::Child>
+    fn execute<I, S>(
+        &self,
+        args: I,
+    ) -> Result<std::process::Child, Box<dyn std::error::Error>>
     where
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr> + std::fmt::Display,
@@ -186,6 +188,10 @@ impl Plugin {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .spawn()
+            .map_err(|e| {
+                format!("{}: {}", e, self.get_executable_path().display())
+                    .into()
+            })
     }
 
     fn get_executable_path(&self) -> PathBuf {
