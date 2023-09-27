@@ -1,14 +1,12 @@
 name: validate
-on: push
+on:
+  push:
+    branches:
+      - "**"
 jobs:
   validate:
     name: Validate
-    strategy:
-      matrix:
-        os:
-          - ubuntu-latest
-          - windows-latest
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
       - name: Lint

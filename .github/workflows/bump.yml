@@ -1,0 +1,61 @@
+name: bump
+on:
+  workflow_dispatch: # Manually trigger
+    inputs:
+      bump:
+        type: choice
+        description: How to bump version
+        options:
+          - minor
+          - major
+          - patch
+jobs:
+  bump:
+    name: Bump
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # NOTE: needs a user token otherwise tag events won't be triggered
+          token: ${{ secrets.PAT_GITHUB }}
+      - name: Install cargo-edit
+        run: cargo install cargo-edit
+      - name: Determine New Version
+        id: version
+        uses: zwaldowski/semver-release-action@v3
+        with:
+          dry_run: true
+          bump: ${{ github.event.inputs.bump }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Set Env
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          TAG: v${{ steps.version.outputs.version }}
+        run: |
+          echo "VERSION=${VERSION}" >> $GITHUB_ENV
+          echo "TAG=${TAG}" >> $GITHUB_ENV
+      - name: Wait for validate job to finish
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          check-name: Validate
+          ref: ${{ github.ref }}
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Create Tag
+        env:
+          GIT_AUTHOR_EMAIL: ${{ secrets.GIT_AUTHOR_EMAIL }}
+          GIT_AUTHOR_NAME: ${{ secrets.GIT_AUTHOR_NAME }}
+          GIT_COMMITTER_EMAIL: ${{ secrets.GIT_AUTHOR_EMAIL }}
+          GIT_COMMITTER_NAME: ${{ secrets.GIT_AUTHOR_NAME }}
+        run: |
+          echo '==> set version in code'
+          cargo set-version "$VERSION"
+          cargo generate-lockfile
+
+          echo '==> commit changes'
+          git add Cargo.toml Cargo.lock
+          git commit -m "bumped version to ${TAG}"
+
+          echo '==> commit tag'
+          git tag "$TAG"
+          git push
+          git push origin "$TAG"
