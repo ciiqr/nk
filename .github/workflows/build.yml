@@ -69,10 +69,10 @@ jobs:
           mkdir assets
 
           # move binaries to assets directory
-          mv 'artifacts/nk-macos-aarch64/nk' 'assets/nk-macos-aarch64'
-          mv 'artifacts/nk-macos-x86_64/nk' 'assets/nk-macos-x86_64'
-          mv 'artifacts/nk-linux-x86_64/nk' 'assets/nk-linux-x86_64'
-          mv 'artifacts/nk-windows-x86_64.exe/nk.exe' 'assets/nk-windows-x86_64.exe'
+          for path in artifacts/*; do
+            declare artifact="$(basename "$path")"
+            mv "${path}/nk"* "assets/${artifact}"
+          done
 
           # create release
           gh release create \
