@@ -1,4 +1,4 @@
-use super::Plugin;
+use super::{Manifest, ManifestAssets, Plugin};
 use crate::{
     config::{Config, PluginSource, Version},
     eval::Evaluator,
@@ -11,7 +11,6 @@ use futures::{
 };
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use octocrab::{models::repos::Release, Octocrab};
 use serde_yaml::Value;
 use std::{
     collections::HashMap,
@@ -77,9 +76,15 @@ pub async fn load_plugins(
                 // determine expected version
                 let expected_version = match version {
                     Version::Latest => {
-                        let latest = get_release(owner, repo, version).await?;
+                        let manifest =
+                            get_release_manifest(owner, repo, version)
+                                .await
+                                // TODO: move error handling...
+                                .map_err(|e| {
+                                    format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
+                                })?;
 
-                        Version::Version(latest.tag_name)
+                        Version::Version(manifest.version)
                     }
                     v @ Version::Version(_) => v.clone(),
                 };
@@ -88,21 +93,37 @@ pub async fn load_plugins(
                 let exists = plugin_dir.try_exists()?;
                 if !exists || current_version(&plugin_dir)? != expected_version
                 {
-                    let release = get_release(owner, repo, version).await?;
+                    let manifest =
+                        get_release_manifest(owner, repo, version).await
+                        // TODO: move error handling...
+                        .map_err(|e| {
+                            format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
+                        })?;
 
                     // determine asset to download
+                    let plugin = manifest
+                        .plugins
+                        .iter()
+                        .find(|p| p.name == *name)
+                        .ok_or_else(|| {
+                            format!(
+                                "could not find plugin \"{name}\" in {owner}/{repo}@{version}, did you mean:\n\t- {}",
+                                manifest.plugins.iter().map(|p| &p.name).join("\n\t- ")
+                            )
+                        })?;
+
+                    // TODO: filter assets to only those matching
+                    // TODO: decide if we want to continue with the asset name priority at all
+                    // - ? should we sort in a similar way, but with the when conditions as the input?
+                    // - ? should we simply rely on the when condition and asset order (first to match wins. if multiple match consider treating it as an error even...)
                     let asset_priority = get_asset_priority(name, &asset_vars);
-                    let asset = release
-                        .assets
-                        .into_iter()
-                        .filter(|a| asset_priority.iter().any(|ap| *ap == a.name))
+                    let asset = plugin.assets.iter()
+                        .filter(|a| asset_priority.iter().any(|ap| *ap == a.file))
                         .sorted_by_cached_key(|a| {
                             asset_priority
                                 .iter()
-                                .position(|ap| *ap == a.name)
-                                .unwrap_or_else(|| {
-                                    unreachable!("asset position not found in asset priority list")
-                                })
+                                .position(|ap| *ap == a.file)
+                                .expect("unreachable: asset position not found in asset priority list")
                         })
                         .next(); // first
 
@@ -115,8 +136,8 @@ pub async fn load_plugins(
                         }
 
                         // download asset
-                        let response =
-                            reqwest::get(asset.browser_download_url).await?;
+                        let asset_url = get_asset_url(&manifest, asset);
+                        let response = reqwest::get(asset_url).await?;
                         let reader = response
                             .bytes_stream()
                             .map_err(|e| io::Error::new(ErrorKind::Other, e))
@@ -131,7 +152,7 @@ pub async fn load_plugins(
 
                         // write version file
                         let version_file = plugin_dir.join(".nk_version");
-                        fs::write(version_file, release.tag_name)?;
+                        fs::write(version_file, manifest.version)?;
                     }
                 }
             }
@@ -189,7 +210,7 @@ fn current_version(
 }
 
 lazy_static! {
-    static ref RELEASE_CACHE: Mutex<HashMap<RepoReleaseReference, Release>> =
+    static ref MANIFEST_CACHE: Mutex<HashMap<RepoReleaseReference, Manifest>> =
         Mutex::new(HashMap::new());
 }
 
@@ -200,72 +221,81 @@ struct RepoReleaseReference {
     version: Version,
 }
 
-async fn get_release(
-    owner: &String,
-    repo: &String,
+async fn get_release_manifest(
+    owner: &str,
+    repo: &str,
     version: &Version,
-) -> Result<Release, octocrab::Error> {
+) -> Result<Manifest, Box<dyn std::error::Error>> {
     let release_ref = RepoReleaseReference {
-        owner: owner.clone(),
-        repo: repo.clone(),
+        owner: owner.into(),
+        repo: repo.into(),
         version: version.clone(),
     };
 
-    // TODO: unwrap...
-    if let Some(release) = RELEASE_CACHE.lock().unwrap().get(&release_ref) {
+    if let Some(release) = MANIFEST_CACHE
+        .lock()
+        .expect("manifest cache lock")
+        .get(&release_ref)
+    {
         return Ok(release.clone());
     }
 
-    // Create github api client
-    let mut builder = Octocrab::builder();
-    if let Ok(token) = std::env::var("GITHUB_TOKEN") {
-        builder = builder.personal_token(token);
-    }
-    let octocrab = builder.build()?;
+    let file = "manifest.yml";
+    // TODO: proper url handling
+    let url = match version {
+        Version::Latest => format!(
+            "https://github.com/{owner}/{repo}/releases/latest/download/{file}"
+        ),
+        Version::Version(version) => format!(
+            "https://github.com/{owner}/{repo}/releases/download/{version}/{file}"
+        ),
+    };
+
+    let response = reqwest::get(url).await?;
+    let manifest: Manifest = serde_yaml::from_str(&response.text().await?)?;
 
     match version {
         Version::Latest => {
-            // TODO: map common errors (http 404, gh rate limiting)
-            let release = octocrab
-                .repos(owner.clone(), repo.clone())
-                .releases()
-                .get_latest()
-                .await?;
-
             // cache as latest release
-            RELEASE_CACHE
+            MANIFEST_CACHE
                 .lock()
-                .unwrap() // TODO: unwrap...
-                .insert(release_ref, release.clone());
+                .expect("manifest cache lock")
+                .insert(release_ref, manifest.clone());
 
             // cache as exact version release
             let exact_version_ref = RepoReleaseReference {
-                owner: owner.clone(),
-                repo: repo.clone(),
-                version: Version::Version(release.tag_name.clone()),
+                owner: owner.into(),
+                repo: repo.into(),
+                version: Version::Version(manifest.version.clone()),
             };
-            RELEASE_CACHE
+            MANIFEST_CACHE
                 .lock()
-                .unwrap() // TODO: unwrap...
-                .insert(exact_version_ref, release.clone());
-
-            Ok(release)
+                .expect("manifest cache lock")
+                .insert(exact_version_ref, manifest.clone());
         }
-        Version::Version(v) => {
-            let release =
-                octocrab.repos(owner, repo).releases().get_by_tag(v).await?;
-
+        Version::Version(_) => {
             // cache release
-            RELEASE_CACHE
+            MANIFEST_CACHE
                 .lock()
-                .unwrap() // TODO: unwrap...
-                .insert(release_ref, release.clone());
-
-            Ok(release)
+                .expect("manifest cache lock")
+                .insert(release_ref, manifest.clone());
         }
     }
+
+    Ok(manifest)
 }
 
+fn get_asset_url(manifest: &Manifest, asset: &ManifestAssets) -> String {
+    let owner = &manifest.owner;
+    let repo = &manifest.repo;
+    let version = &manifest.version;
+    let file = &asset.file;
+
+    // TODO: proper url handling
+    format!(
+        "https://github.com/{owner}/{repo}/releases/download/{version}/{file}"
+    )
+}
 struct AssetVars {
     distro: String,
     os: String,
@@ -308,28 +338,13 @@ fn get_asset_priority(name: &String, vars: &AssetVars) -> Vec<String> {
     } = vars;
 
     vec![
-        format!(
-            "{name}-{distro}-{arch}.tar.gz",
-            name = name,
-            distro = distro,
-            arch = arch
-        ),
-        format!(
-            "{name}-{os}-{arch}.tar.gz",
-            name = name,
-            os = os,
-            arch = arch
-        ),
-        format!(
-            "{name}-{family}-{arch}.tar.gz",
-            name = name,
-            family = family,
-            arch = arch
-        ),
-        format!("{name}-{arch}.tar.gz", name = name, arch = arch,),
-        format!("{name}-{distro}.tar.gz", name = name, distro = distro,),
-        format!("{name}-{os}.tar.gz", name = name, os = os,),
-        format!("{name}-{family}.tar.gz", name = name, family = family,),
-        format!("{name}.tar.gz", name = name,),
+        format!("{name}-{distro}-{arch}.tar.gz"),
+        format!("{name}-{os}-{arch}.tar.gz"),
+        format!("{name}-{family}-{arch}.tar.gz"),
+        format!("{name}-{arch}.tar.gz"),
+        format!("{name}-{distro}.tar.gz"),
+        format!("{name}-{os}.tar.gz"),
+        format!("{name}-{family}.tar.gz"),
+        format!("{name}.tar.gz"),
     ]
 }

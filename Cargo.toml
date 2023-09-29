@@ -14,7 +14,6 @@ categories = ["command-line-utilities"]
 nix = "0.25.0"
 
 [dependencies]
-indoc = "1.0.7"
 shellexpand = "2.1.2"
 serde = { version = "1.0.145", features = ["derive"] }
 serde_yaml = "0.9.13"
@@ -37,7 +36,6 @@ itertools = "0.10.5"
 jsonschema = "0.16.1"
 topological-sort = "0.2.2"
 lazy_static = "1.4.0"
-octocrab = "0.17.0"
 tokio = { version = "1.22.0", features = ["full"] }
 reqwest = { version = "0.11.13", features = ["stream"] }
 async-compression = { version = "0.3.15", features = ["futures-io", "gzip"] }

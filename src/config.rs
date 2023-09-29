@@ -65,6 +65,15 @@ pub enum Version {
     Version(String),
 }
 
+impl std::fmt::Display for Version {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Version::Latest => "latest",
+            Version::Version(v) => v,
+        })
+    }
+}
+
 #[derive(Debug)]
 pub enum PluginSource {
     Local {
@@ -110,6 +119,8 @@ impl<'de> Deserialize<'de> for PluginSource {
                     captures.get(4),
                     captures.get(5),
                 ) {
+                    // TODO: name is going to become optional... but then, we need to be sure whatever uses PluginSource::Github handles that this represents multiple plugins...
+                    // TODO: regex also needs to mark the name group as optional
                     (Some(owner), Some(repo), version, Some(name)) => {
                         Ok(PluginSource::Github {
                             owner: owner.as_str().to_string(),
