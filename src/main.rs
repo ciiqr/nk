@@ -26,11 +26,12 @@ mod traits;
 mod utils;
 mod vars;
 
+use args::PluginSubcommand;
 use args::{Arguments, Commands};
 use clap::CommandFactory;
 use clap::Parser;
 use commands::completion;
-use commands::{link, plugin, provision, resolve};
+use commands::{helper, link, provision, resolve};
 use config::Config;
 use std::process::ExitCode;
 
@@ -51,9 +52,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     match arguments.command {
         Some(Commands::Provision(args)) => provision(args, config?).await,
         Some(Commands::Resolve(args)) => resolve(args, config?).await,
-        Some(Commands::Link(args)) => link(&args),
-        Some(Commands::Plugin(args)) => plugin(&args),
         Some(Commands::Completion(args)) => completion(&args, &mut cmd),
+        Some(Commands::Plugin(subcommand)) => match subcommand {
+            PluginSubcommand::Link(args) => link(&args),
+            PluginSubcommand::Helper(args) => helper(&args),
+        },
         None => {
             cmd.print_help()?;
             Ok(())

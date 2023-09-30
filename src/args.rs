@@ -34,16 +34,23 @@ pub enum Commands {
     #[command(alias = "r")]
     Resolve(ResolveArgs),
 
+    /// Generate shell completions
+    #[command(after_long_help = COMPLETION_EXAMPLES_HELP.as_str())]
+    Completion(CompletionArgs),
+
+    /// Plugin utilities
+    #[command(subcommand)]
+    Plugin(PluginSubcommand),
+}
+
+#[derive(Debug, Subcommand)]
+pub enum PluginSubcommand {
     /// Link plugin at path
     #[command(after_long_help = LINK_HELP.as_str())]
     Link(LinkArgs),
 
     /// Scripting language plugin helpers
-    Plugin(PluginArgs),
-
-    /// Generate shell completions
-    #[command(after_long_help = COMPLETION_EXAMPLES_HELP.as_str())]
-    Completion(CompletionArgs),
+    Helper(HelperArgs),
 }
 
 pub struct CompletionFile {
@@ -135,7 +142,7 @@ pub enum PluginLanguage {
 }
 
 #[derive(Debug, Args)]
-pub struct PluginArgs {
+pub struct HelperArgs {
     #[arg(value_name = "language")]
     pub language: PluginLanguage,
 }
