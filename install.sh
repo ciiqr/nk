@@ -31,6 +31,20 @@ nk::install::identify_arch() {
     esac
 }
 
+nk::install::identify_jq_arch() {
+    declare raw_arch
+    raw_arch="$(uname -m)"
+
+    case "$raw_arch" in
+        x86_64)
+            echo 'amd64'
+            ;;
+        *)
+            echo "$raw_arch"
+            ;;
+    esac
+}
+
 nk::install::usage() {
     echo 'usage: nk-install [--version <version>]'
     echo ''
@@ -100,21 +114,9 @@ chmod +x "$nk_path"
 echo '==> download jq'
 
 # derermine jq url
-declare jq_url
-if [[ "$os" == 'macos' && "$arch" == 'aarch64' ]]; then
-    jq_url='https://github.com/ciiqr/jq-macos-arm/releases/latest/download/jq'
-else
-    declare jq_binary
-    if [[ "$os" == 'linux' && "$arch" == 'x86_64' ]]; then
-        jq_binary='jq-linux64'
-    elif [[ "$os" == 'macos' && "$arch" == 'x86_64' ]]; then
-        jq_binary='jq-osx-amd64'
-    else
-        echo "unrecognized os/arch: ${os}/${arch}"
-        exit 1
-    fi
-    jq_url="https://github.com/stedolan/jq/releases/download/jq-1.6/${jq_binary}"
-fi
+declare jq_arch
+jq_arch="$(nk::install::identify_jq_arch)"
+declare jq_url="https://github.com/jqlang/jq/releases/download/jq-1.7/jq-${os}-${jq_arch}"
 
 # download jq binary
 curl -fsSL "$jq_url" -o "$jq_path"
