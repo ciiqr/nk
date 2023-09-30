@@ -25,7 +25,7 @@ configuration management for developers
     sources:
       - .
     plugins:
-      - ciiqr/nk-plugins#brew
+      - ciiqr/nk-plugins
     ```
 
 -   Create state config ie. `config.yml` (any `*.yml` except dotfiles `.*.yml`)
