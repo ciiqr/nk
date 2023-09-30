@@ -88,8 +88,10 @@ pub enum PluginSource {
 }
 
 lazy_static! {
-    static ref GITHUB_PLUGIN_REGEX: Regex =
-        Regex::new(r"^(.+?)/(.+?)(@(.+))?(#(.*))?$").unwrap();
+    static ref GITHUB_PLUGIN_REGEX: Regex = Regex::new(
+        r"^(?<owner>.+?)/(?<repo>.+?)(@(?<version>.+?))?(#(?<plugin>.*))?$"
+    )
+    .unwrap();
 }
 
 impl<'de> Deserialize<'de> for PluginSource {
@@ -114,10 +116,10 @@ impl<'de> Deserialize<'de> for PluginSource {
                     })?;
 
                 match (
-                    captures.get(1),
-                    captures.get(2),
-                    captures.get(4),
-                    captures.get(5),
+                    captures.name("owner"),
+                    captures.name("repo"),
+                    captures.name("version"),
+                    captures.name("plugin"),
                 ) {
                     (Some(owner), Some(repo), version, plugin) => {
                         Ok(PluginSource::Github {
