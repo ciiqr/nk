@@ -108,6 +108,7 @@ fn get_macos_distro() -> Result<&'static str, Box<dyn std::error::Error>> {
     let version = version_string.split('.').collect::<Vec<_>>();
 
     match version[..] {
+        ["14", ..] => Ok("sonoma"),
         ["13", ..] => Ok("ventura"),
         ["12", ..] => Ok("monterey"),
         ["11", ..] => Ok("big_sur"),
