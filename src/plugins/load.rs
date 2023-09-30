@@ -20,6 +20,109 @@ use std::{
 };
 use std::{fs, sync::Mutex};
 
+async fn download_github_plugin(
+    owner: &str,
+    repo: &str,
+    version: &Version,
+    plugin: &str,
+    asset_vars: &AssetVars,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // TODO: need a way of caching the non-existence of a plugin for the current platform... (something around the plugin_dir so users can detect it and easily fix it)
+    // - probably just need to save the manifest...
+    let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
+        format!("~/.nk/plugins/{}", plugin).as_str(),
+    ))?;
+
+    // linked plugins should be left as is
+    if plugin_dir.is_symlink() {
+        return Ok(());
+    }
+
+    // determine expected version
+    let expected_version = match version {
+        Version::Latest => {
+            let manifest =
+                get_release_manifest(owner, repo, version)
+                    .await
+                    // TODO: move error handling...
+                    .map_err(|e| {
+                        format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
+                    })?;
+
+            Version::Version(manifest.version)
+        }
+        v @ Version::Version(_) => v.clone(),
+    };
+
+    // download/update plugin
+    let exists = plugin_dir.try_exists()?;
+    if !exists || current_version(&plugin_dir)? != expected_version {
+        let manifest =
+            get_release_manifest(owner, repo, version).await
+            // TODO: move error handling...
+            .map_err(|e| {
+                format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
+            })?;
+
+        // determine asset to download
+        let manifest_plugin = manifest
+            .plugins
+            .iter()
+            .find(|p| p.name == *plugin)
+            .ok_or_else(|| {
+                format!(
+                    "could not find plugin \"{plugin}\" in {owner}/{repo}@{version}, did you mean:\n\t- {}",
+                    manifest.plugins.iter().map(|p| &p.name).join("\n\t- ")
+                )
+            })?;
+
+        // TODO: filter assets to only those matching
+        // TODO: decide if we want to continue with the asset name priority at all
+        // - ? should we sort in a similar way, but with the when conditions as the input?
+        // - ? should we simply rely on the when condition and asset order (first to match wins. if multiple match consider treating it as an error even...)
+        let asset_priority = get_asset_priority(plugin, asset_vars);
+        let asset = manifest_plugin.assets.iter()
+            .filter(|a| asset_priority.iter().any(|ap| *ap == a.file))
+            .sorted_by_cached_key(|a| {
+                asset_priority
+                    .iter()
+                    .position(|ap| *ap == a.file)
+                    .expect("unreachable: asset position not found in asset priority list")
+            })
+            .next(); // first
+
+        // download
+        // NOTE: if no asset is found, plugin is assumed to not support the current platform and is ignored
+        if let Some(asset) = asset {
+            // delete dir if it already exists
+            if exists {
+                fs::remove_dir_all(plugin_dir.clone())?;
+            }
+
+            // download asset
+            let asset_url = get_asset_url(&manifest, asset);
+            let response = reqwest::get(asset_url).await?;
+            let reader = response
+                .bytes_stream()
+                .map_err(|e| io::Error::new(ErrorKind::Other, e))
+                .into_async_read();
+
+            // extract
+            let decoder = GzipDecoder::new(BufReader::new(reader));
+            let archive = Archive::new(decoder);
+            archive.unpack(plugin_dir.clone()).await?;
+
+            // TODO: ? ensure name in plugin.yml matches?
+
+            // write version file
+            let version_file = plugin_dir.join(".nk_version");
+            fs::write(version_file, manifest.version)?;
+        }
+    }
+
+    Ok(())
+}
+
 pub async fn load_plugins(
     config: &Config,
     builtin_vars: &HashMap<String, Value>,
@@ -61,22 +164,19 @@ pub async fn load_plugins(
                 owner,
                 repo,
                 version,
-                name,
+                plugin,
             } => {
-                // TODO: need a way of caching the non-existence of a plugin for the current platform... (something around the plugin_dir so users can detect it and easily fix it)
-                let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
-                    format!("~/.nk/plugins/{}", name).as_str(),
-                ))?;
-
-                // linked plugins should be left as is
-                if plugin_dir.is_symlink() {
-                    continue;
-                }
-
-                // determine expected version
-                let expected_version = match version {
-                    Version::Latest => {
-                        let manifest =
+                if let Some(plugin) = plugin {
+                    download_github_plugin(
+                        owner,
+                        repo,
+                        version,
+                        plugin,
+                        &asset_vars,
+                    )
+                    .await?;
+                } else {
+                    let manifest =
                             get_release_manifest(owner, repo, version)
                                 .await
                                 // TODO: move error handling...
@@ -84,75 +184,15 @@ pub async fn load_plugins(
                                     format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
                                 })?;
 
-                        Version::Version(manifest.version)
-                    }
-                    v @ Version::Version(_) => v.clone(),
-                };
-
-                // download/update plugin
-                let exists = plugin_dir.try_exists()?;
-                if !exists || current_version(&plugin_dir)? != expected_version
-                {
-                    let manifest =
-                        get_release_manifest(owner, repo, version).await
-                        // TODO: move error handling...
-                        .map_err(|e| {
-                            format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
-                        })?;
-
-                    // determine asset to download
-                    let plugin = manifest
-                        .plugins
-                        .iter()
-                        .find(|p| p.name == *name)
-                        .ok_or_else(|| {
-                            format!(
-                                "could not find plugin \"{name}\" in {owner}/{repo}@{version}, did you mean:\n\t- {}",
-                                manifest.plugins.iter().map(|p| &p.name).join("\n\t- ")
-                            )
-                        })?;
-
-                    // TODO: filter assets to only those matching
-                    // TODO: decide if we want to continue with the asset name priority at all
-                    // - ? should we sort in a similar way, but with the when conditions as the input?
-                    // - ? should we simply rely on the when condition and asset order (first to match wins. if multiple match consider treating it as an error even...)
-                    let asset_priority = get_asset_priority(name, &asset_vars);
-                    let asset = plugin.assets.iter()
-                        .filter(|a| asset_priority.iter().any(|ap| *ap == a.file))
-                        .sorted_by_cached_key(|a| {
-                            asset_priority
-                                .iter()
-                                .position(|ap| *ap == a.file)
-                                .expect("unreachable: asset position not found in asset priority list")
-                        })
-                        .next(); // first
-
-                    // download
-                    // NOTE: if no asset is found, plugin is assumed to not support the current platform and is ignored
-                    if let Some(asset) = asset {
-                        // delete dir if it already exists
-                        if exists {
-                            fs::remove_dir_all(plugin_dir.clone())?;
-                        }
-
-                        // download asset
-                        let asset_url = get_asset_url(&manifest, asset);
-                        let response = reqwest::get(asset_url).await?;
-                        let reader = response
-                            .bytes_stream()
-                            .map_err(|e| io::Error::new(ErrorKind::Other, e))
-                            .into_async_read();
-
-                        // extract
-                        let decoder = GzipDecoder::new(BufReader::new(reader));
-                        let archive = Archive::new(decoder);
-                        archive.unpack(plugin_dir.clone()).await?;
-
-                        // TODO: ? ensure name in plugin.yml matches?
-
-                        // write version file
-                        let version_file = plugin_dir.join(".nk_version");
-                        fs::write(version_file, manifest.version)?;
+                    for p in manifest.plugins {
+                        download_github_plugin(
+                            owner,
+                            repo,
+                            version,
+                            &p.name,
+                            &asset_vars,
+                        )
+                        .await?;
                     }
                 }
             }
@@ -160,40 +200,63 @@ pub async fn load_plugins(
     }
 
     // load plugins
-    let all_plugins = config
+    let all_plugins = futures::future::join_all(config
         .plugins
         .iter()
         .enumerate()
-        .map::<Result<_, Box<dyn std::error::Error>>, _>(|(i, p)| {
-            match &p.source {
-                PluginSource::Local { source: _ } => Ok((i, p)),
-                PluginSource::Github {
-                    owner: _,
-                    repo: _,
-                    version: _,
-                    name,
-                } => {
-                    let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
-                        format!("~/.nk/plugins/{}", name).as_str(),
-                    ))?;
+        .map(|(i, p)| {
+             async move {
+                Ok::<_, Box<dyn std::error::Error>>(match &p.source {
+                    PluginSource::Local { source } => vec![
+                        Some(Plugin::from_path(source.into(), i))
+                    ],
+                    PluginSource::Github {
+                        owner,
+                        repo,
+                        version,
+                        plugin,
+                    } => {
+                        if let Some(plugin) = plugin {
+                            let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
+                                format!("~/.nk/plugins/{}", plugin).as_str(),
+                            ))?;
 
-                    let exists = plugin_dir.try_exists()?;
+                            let exists = plugin_dir.try_exists()?;
+                            if !exists {
+                                return Ok(vec![None]);
+                            }
 
-                    if exists {
-                        Ok((i, p))
-                    } else {
-                        Err(format!(
-                            "{} doesn't exist",
-                            plugin_dir.to_string_lossy()
-                        )
-                        .into())
+                            vec![Some(Plugin::from_path(plugin_dir, i))]
+                        }else {
+                            let manifest =
+                                get_release_manifest(owner, repo, version)
+                                    .await
+                                    // TODO: move error handling...
+                                    .map_err(|e| {
+                                        format!("{e}: while downloading manifest for {owner}/{repo}@{version}")
+                                    })?;
+
+                            manifest.plugins.iter().map(|p| {
+                                let plugin_dir = PathBuf::from_str(&shellexpand::tilde(
+                                    format!("~/.nk/plugins/{}", p.name).as_str(),
+                                ))?;
+
+                                let exists = plugin_dir.try_exists()?;
+                                if !exists {
+                                    return Ok(None);
+                                }
+
+                                Ok::<_, Box<dyn std::error::Error>>(Some(Plugin::from_path(plugin_dir, i)))
+                            }).collect::<Result<Vec<_>, _>>()?
+                        }
                     }
-                }
+                })
             }
-        })
-        // TODO: this filters permission errors too, fix this (we should only ignore the directory not existing...)
+        })).await.into_iter()
+        // TODO: fix this (we're just ignoring errors...)
         .filter_map(Result::ok)
-        .map(|(i, p)| Plugin::from_config(p, i))
+        .flatten()
+        .flatten()
         .collect::<Result<_, _>>()?;
 
     // filter plugins for os
@@ -221,7 +284,7 @@ struct RepoReleaseReference {
     version: Version,
 }
 
-async fn get_release_manifest(
+pub async fn get_release_manifest(
     owner: &str,
     repo: &str,
     version: &Version,
@@ -303,7 +366,7 @@ struct AssetVars {
     arch: String,
 }
 
-fn get_asset_priority(name: &String, vars: &AssetVars) -> Vec<String> {
+fn get_asset_priority(name: &str, vars: &AssetVars) -> Vec<String> {
     // ie. files plugin on macos
     // - files-ventura-aarch64.tar.gz
     // - files-macos-aarch64.tar.gz

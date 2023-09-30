@@ -83,13 +83,13 @@ pub enum PluginSource {
         owner: String,
         repo: String,
         version: Version,
-        name: String,
+        plugin: Option<String>,
     },
 }
 
 lazy_static! {
     static ref GITHUB_PLUGIN_REGEX: Regex =
-        Regex::new(r"^(.+?)/(.+?)(@(.+))?#(.*)$").unwrap();
+        Regex::new(r"^(.+?)/(.+?)(@(.+))?(#(.*))?$").unwrap();
 }
 
 impl<'de> Deserialize<'de> for PluginSource {
@@ -119,16 +119,14 @@ impl<'de> Deserialize<'de> for PluginSource {
                     captures.get(4),
                     captures.get(5),
                 ) {
-                    // TODO: name is going to become optional... but then, we need to be sure whatever uses PluginSource::Github handles that this represents multiple plugins...
-                    // TODO: regex also needs to mark the name group as optional
-                    (Some(owner), Some(repo), version, Some(name)) => {
+                    (Some(owner), Some(repo), version, plugin) => {
                         Ok(PluginSource::Github {
                             owner: owner.as_str().to_string(),
                             repo: repo.as_str().to_string(),
                             version: version.map_or(Version::Latest, |v| {
                                 Version::Version(v.as_str().to_string())
                             }),
-                            name: name.as_str().to_string(),
+                            plugin: plugin.map(|p| p.as_str().to_string()),
                         })
                     }
                     _ => Err(D::Error::custom(format!(

@@ -1,5 +1,4 @@
 use crate::{
-    config::{ConfigPlugin, PluginSource},
     eval::DeclaredState,
     extensions::SerdeDeserializeFromYamlPath,
     state::{Condition, Declaration, RawDeclaration},
@@ -15,7 +14,6 @@ use std::{
     io::Write,
     path::PathBuf,
     process::{Command, Stdio},
-    str::FromStr,
 };
 
 #[serde_as]
@@ -79,22 +77,10 @@ impl Hash for Plugin {
 
 // TODO: might change to be a specific plugin implementation (for basic plugins)
 impl Plugin {
-    pub fn from_config(
-        plugin: &ConfigPlugin,
+    pub fn from_path(
+        path: PathBuf,
         config_index: usize,
     ) -> Result<Plugin, Box<dyn std::error::Error>> {
-        let path = match &plugin.source {
-            PluginSource::Local { source } => source.clone(),
-            PluginSource::Github {
-                owner: _,
-                repo: _,
-                version: _,
-                name,
-            } => PathBuf::from_str(&shellexpand::tilde(
-                format!("~/.nk/plugins/{}", name).as_str(),
-            ))?,
-        };
-
         let definition = {
             let plugin_yml = path.join("plugin.yml");
             match PluginDefinition::from_yaml_file(&plugin_yml) {
