@@ -8,7 +8,7 @@ use serde_with::{serde_as, OneOrMany};
 pub struct ManifestAssets {
     pub file: String,
 
-    #[serde_as(deserialize_as = "OneOrMany<_>")]
+    #[serde_as(deserialize_as = "OneOrMany<_>", serialize_as = "OneOrMany<_>")]
     #[serde(default)]
     pub when: Vec<Condition>,
 }

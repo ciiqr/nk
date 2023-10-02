@@ -8,7 +8,7 @@ use std::collections::HashMap;
 #[serde_as]
 #[derive(Deserialize, Debug, Clone)]
 pub struct Group {
-    #[serde_as(deserialize_as = "OneOrMany<_>")]
+    #[serde_as(deserialize_as = "OneOrMany<_>", serialize_as = "OneOrMany<_>")]
     #[serde(default)]
     pub when: Vec<Condition>,
     #[serde(default)]

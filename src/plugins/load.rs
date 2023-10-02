@@ -2,6 +2,7 @@ use super::{Manifest, ManifestAssets, Plugin};
 use crate::{
     config::{Config, PluginSource, Version},
     eval::Evaluator,
+    vars::{get_system_vars, SystemVars},
 };
 use async_compression::futures::bufread::GzipDecoder;
 use async_tar::Archive;
@@ -11,7 +12,6 @@ use futures::{
 };
 use itertools::Itertools;
 use lazy_static::lazy_static;
-use serde_yaml::Value;
 use std::{
     collections::HashMap,
     fs::read_to_string,
@@ -25,7 +25,7 @@ async fn download_github_plugin(
     repo: &str,
     version: &Version,
     plugin: &str,
-    asset_vars: &AssetVars,
+    system_vars: &SystemVars,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // TODO: need a way of caching the non-existence of a plugin for the current platform... (something around the plugin_dir so users can detect it and easily fix it)
     // - probably just need to save the manifest...
@@ -80,7 +80,7 @@ async fn download_github_plugin(
         // TODO: decide if we want to continue with the asset name priority at all
         // - ? should we sort in a similar way, but with the when conditions as the input?
         // - ? should we simply rely on the when condition and asset order (first to match wins. if multiple match consider treating it as an error even...)
-        let asset_priority = get_asset_priority(plugin, asset_vars);
+        let asset_priority = get_asset_priority(plugin, system_vars);
         let asset = manifest_plugin.assets.iter()
             .filter(|a| asset_priority.iter().any(|ap| *ap == a.file))
             .sorted_by_cached_key(|a| {
@@ -125,36 +125,9 @@ async fn download_github_plugin(
 
 pub async fn load_plugins(
     config: &Config,
-    builtin_vars: &HashMap<String, Value>,
     evaluator: &Evaluator,
 ) -> Result<Vec<Plugin>, Box<dyn std::error::Error>> {
-    // TODO: stuff like this would be much cleaner if builtin_vars was a struct with specific fields
-    let asset_vars = AssetVars {
-        distro: builtin_vars
-            .get("distro")
-            .ok_or("couldn't find builtin var: distro")?
-            .as_str()
-            .ok_or("invalid type for builtin var: distro")?
-            .to_string(),
-        os: builtin_vars
-            .get("os")
-            .ok_or("couldn't find builtin var: os")?
-            .as_str()
-            .ok_or("invalid type for builtin var: os")?
-            .to_string(),
-        family: builtin_vars
-            .get("family")
-            .ok_or("couldn't find builtin var: family")?
-            .as_str()
-            .ok_or("invalid type for builtin var: family")?
-            .to_string(),
-        arch: builtin_vars
-            .get("arch")
-            .ok_or("couldn't find builtin var: arch")?
-            .as_str()
-            .ok_or("invalid type for builtin var: arch")?
-            .to_string(),
-    };
+    let system_vars = get_system_vars()?;
 
     // download/update remote plugins
     for plugin in &config.plugins {
@@ -172,7 +145,7 @@ pub async fn load_plugins(
                         repo,
                         version,
                         plugin,
-                        &asset_vars,
+                        &system_vars,
                     )
                     .await?;
                 } else {
@@ -190,7 +163,7 @@ pub async fn load_plugins(
                             repo,
                             version,
                             &p.name,
-                            &asset_vars,
+                            &system_vars,
                         )
                         .await?;
                     }
@@ -359,14 +332,8 @@ fn get_asset_url(manifest: &Manifest, asset: &ManifestAssets) -> String {
         "https://github.com/{owner}/{repo}/releases/download/{version}/{file}"
     )
 }
-struct AssetVars {
-    distro: String,
-    os: String,
-    family: String,
-    arch: String,
-}
 
-fn get_asset_priority(name: &str, vars: &AssetVars) -> Vec<String> {
+fn get_asset_priority(name: &str, vars: &SystemVars) -> Vec<String> {
     // ie. files plugin on macos
     // - files-ventura-aarch64.tar.gz
     // - files-macos-aarch64.tar.gz
@@ -393,7 +360,7 @@ fn get_asset_priority(name: &str, vars: &AssetVars) -> Vec<String> {
     // - chocolatey-windows.tar.gz
     // - chocolatey.tar.gz
 
-    let AssetVars {
+    let SystemVars {
         distro,
         os,
         family,

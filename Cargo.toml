@@ -48,3 +48,6 @@ openssl = { version = "0.10.45", features = ["vendored"] }
 clap = { version = "4.4.4", features = ["derive"] }
 clap_complete = "4.4.1"
 faccess = "0.2.4"
+strum = { version = "0.25.0", features = ["derive"] }
+tar = "0.4.40"
+flate2 = "1.0.27"

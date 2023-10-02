@@ -51,6 +51,10 @@ pub enum PluginSubcommand {
 
     /// Scripting language plugin helpers
     Helper(HelperArgs),
+
+    /// Generate the assets for releasing a plugin
+    #[command(after_long_help = PACK_HELP.as_str())]
+    Pack(PackArgs),
 }
 
 pub struct CompletionFile {
@@ -92,8 +96,28 @@ lazy_static! {
     static ref LINK_HELP: String = format!(
         "{}\n{}\n{}",
         style("Examples:").underlined().bold(),
-        "  $ nk link ./plugin.yml",
-        "  $ nk link ~/Projects/nk-plugins/*/plugin.yml"
+        "  $ nk plugin link ./plugin.yml",
+        "  $ nk plugin link ~/Projects/nk-plugins/*/plugin.yml"
+    );
+    static ref PACK_HELP: String = format!(
+        "{}\n{}\n\n{}\n{}",
+        style("Examples:").underlined().bold(),
+        [
+            "  $ nk plugin pack \\",
+            "    --owner 'ciiqr' \\",
+            "    --repo 'nk-plugins' \\",
+            "    --version 'v0.12.0' \\",
+            "    --output 'assets' \\",
+            "    ~/Projects/nk-plugins/*/plugin.yml",
+        ].join("\n"),
+        style("Notes:").underlined().bold(),
+        [
+            "  - The file names for assets are generated based on the `when:` conditions in your plugin.yml",
+            "  - Any simple (`var == \"value\"`) conditions for system vars will contribute to the file name",
+            "    - System vars include: distro, os, family, and arch",
+            "  - ie. `when: [os == \"macos\", arch == \"aarch64\"]`, will produce `{plugin}-macos-aarch64.tar.gz`",
+            "  - For now, anything more complicated will need to be packed manually"
+        ].join("\n")
     );
 }
 
@@ -131,7 +155,7 @@ pub struct ResolveArgs {
 
 #[derive(Debug, Args)]
 pub struct LinkArgs {
-    /// path to a plugin.yml file
+    /// Path to a plugin.yml file
     #[arg(value_name = "path", required = true)]
     pub paths: Vec<PathBuf>,
 }
@@ -145,6 +169,25 @@ pub enum PluginLanguage {
 pub struct HelperArgs {
     #[arg(value_name = "language")]
     pub language: PluginLanguage,
+}
+
+#[derive(Debug, Args)]
+pub struct PackArgs {
+    /// Github repo owner
+    #[arg(long, value_name = "owner")]
+    pub owner: String,
+    /// Github repo name
+    #[arg(long, value_name = "repo")]
+    pub repo: String,
+    /// Release version
+    #[arg(long, value_name = "version")]
+    pub version: String,
+    /// Output directory for assets
+    #[arg(long, value_name = "output", default_value = "./")]
+    pub output: PathBuf,
+    /// Path to a plugin.yml file
+    #[arg(value_name = "path", required = true)]
+    pub paths: Vec<PathBuf>,
 }
 
 #[derive(Debug, Subcommand)]

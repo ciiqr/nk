@@ -13,7 +13,7 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
-    pub fn new(vars: HashMap<String, Value>) -> Self {
+    pub fn new(vars: HashMap<&str, Value>) -> Self {
         let mut global_scope = Scope::new();
         for (k, var) in vars {
             match var {

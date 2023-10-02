@@ -16,7 +16,7 @@ pub struct ResolveOptions {
 
 pub fn resolve(
     config: &Config,
-    builtin_vars: &HashMap<String, Value>,
+    builtin_vars: &HashMap<&str, Value>,
     evaluator: &Evaluator,
     plugins: &[Plugin],
     options: &ResolveOptions,
@@ -33,7 +33,7 @@ pub fn resolve(
         builtin_vars
             .clone()
             .into_iter()
-            .map(|(k, v)| (Value::String(k), v)),
+            .map(|(k, v)| (Value::String(k.to_string()), v)),
     );
 
     // merge in plugin dependencies

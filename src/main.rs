@@ -30,8 +30,7 @@ use args::PluginSubcommand;
 use args::{Arguments, Commands};
 use clap::CommandFactory;
 use clap::Parser;
-use commands::completion;
-use commands::{helper, link, provision, resolve};
+use commands::{completion, helper, link, pack, provision, resolve};
 use config::Config;
 use std::process::ExitCode;
 
@@ -56,6 +55,7 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
         Some(Commands::Plugin(subcommand)) => match subcommand {
             PluginSubcommand::Link(args) => link(&args),
             PluginSubcommand::Helper(args) => helper(&args),
+            PluginSubcommand::Pack(args) => pack(args),
         },
         None => {
             cmd.print_help()?;

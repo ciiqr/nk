@@ -31,7 +31,7 @@ pub async fn provision(
     let evaluator = Evaluator::new(builtin_vars.clone());
 
     // load plugins
-    let plugins = load_plugins(&config, &builtin_vars, &evaluator).await?;
+    let plugins = load_plugins(&config, &evaluator).await?;
 
     // resolve state
     let resolved = resolve(
