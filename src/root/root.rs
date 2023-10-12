@@ -20,6 +20,7 @@ pub fn sudo_prompt() -> Result<(), String> {
 
 #[cfg(unix)]
 pub fn sudo_prompt() -> Result<(), Box<dyn std::error::Error>> {
+    use console::style;
     use std::process::Command;
 
     let status = Command::new("sudo").args(["true"]).status()?;
@@ -30,7 +31,9 @@ pub fn sudo_prompt() -> Result<(), Box<dyn std::error::Error>> {
     // now attempt non-interactive
     let status = Command::new("sudo").args(["-n", "true"]).status()?;
     if !status.success() {
-        return Err("requires either a reasonable sudo timeout (see timestamp_timeout) or passwordless sudo".into());
+        return Err(format!("{}\n\techo \"Defaults:${{USER}} timestamp_timeout=30\" | sudo EDITOR='tee -a' visudo \"/etc/sudoers.d/0-${{USER}}-timeout\"",
+            style("requires either a reasonable sudo timeout (see timestamp_timeout) or passwordless sudo. ie. try setting a 30m timeout:").red().bold()
+        ).into());
     }
 
     Ok(())
