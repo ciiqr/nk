@@ -24,7 +24,7 @@ impl<'reg> TemplatingEngine<'reg> {
 pub fn render_group(
     group: ResolvedGroup,
 ) -> Result<ResolvedGroup, Box<dyn std::error::Error>> {
-    let engine = TemplatingEngine::new(group.vars.clone());
+    let engine = TemplatingEngine::new(group.vars);
 
     let declarations = group
         .declarations
@@ -33,7 +33,7 @@ pub fn render_group(
         .collect::<Result<_, Box<dyn std::error::Error>>>()?;
 
     Ok(ResolvedGroup {
-        vars: group.vars,
+        vars: engine.data,
         declarations,
     })
 }

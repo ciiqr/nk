@@ -1,8 +1,4 @@
-use crate::{
-    args::Arguments,
-    state::{Machine, RawMachine},
-    utils::deserialize_map_to_vec_of_named,
-};
+use crate::args::Arguments;
 use lazy_static::lazy_static;
 use regex::Regex;
 use serde::{de::Error, Deserialize, Deserializer};
@@ -11,16 +7,9 @@ use std::{path::PathBuf, str::FromStr};
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    // TODO: either need to support multiple configs or this needs to be configured some other way...
-    pub machine: Option<String>,
     #[serde(deserialize_with = "expand_paths")]
     pub sources: Vec<PathBuf>,
     pub plugins: Vec<ConfigPlugin>,
-    #[serde(
-        default,
-        deserialize_with = "deserialize_map_to_vec_of_named::<RawMachine, _, _>"
-    )]
-    pub machines: Vec<Machine>,
 }
 
 impl Config {

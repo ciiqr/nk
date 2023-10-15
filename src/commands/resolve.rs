@@ -14,10 +14,10 @@ pub async fn resolve(
     config: Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
     // initialize builtin vars
-    let builtin_vars = get_builtin_vars(&config)?;
+    let builtin_vars = get_builtin_vars()?;
 
-    // initialize evaluator (machine, roles, platform, etc.)
-    let evaluator = Evaluator::new(builtin_vars.clone());
+    // initialize evaluator
+    let evaluator = Evaluator::new(&builtin_vars);
 
     // load plugins
     let plugins = load_plugins(&config, &evaluator).await?;

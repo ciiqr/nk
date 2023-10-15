@@ -25,10 +25,10 @@ pub async fn provision(
     sudo_prompt()?;
 
     // initialize builtin vars
-    let builtin_vars = get_builtin_vars(&config)?;
+    let builtin_vars = get_builtin_vars()?;
 
     // initialize evaluator
-    let evaluator = Evaluator::new(builtin_vars.clone());
+    let evaluator = Evaluator::new(&builtin_vars);
 
     // load plugins
     let plugins = load_plugins(&config, &evaluator).await?;

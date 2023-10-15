@@ -1,31 +1,57 @@
-use crate::{config::Config, state::Machine};
 use home::home_dir;
 use os_info::Type;
-use serde_yaml::Value;
+use serde::Serialize;
+use serde_yaml::{Mapping, Value};
+use std::env;
 use std::process::Command;
-use std::{collections::HashMap, env};
 use strum::{Display, EnumIter, EnumString};
 
 pub struct SystemVars {
-    pub distro: SystemDistro,
-    pub os: SystemOs,
-    pub family: SystemFamily,
-    pub arch: SystemArch,
+    pub distro: String,
+    pub os: String,
+    pub family: String,
+    pub arch: String,
 }
 
 pub fn get_system_vars() -> Result<SystemVars, Box<dyn std::error::Error>> {
     Ok(SystemVars {
-        distro: get_system_distro()?,
-        os: get_system_os()?,
-        family: get_system_family()?,
-        arch: get_system_arch()?,
+        distro: get_system_distro()?.to_string(),
+        os: get_system_os()?.to_string(),
+        family: get_system_family()?.to_string(),
+        arch: get_system_arch()?.to_string(),
     })
 }
 
-// TODO: consider converting to a struct
-pub fn get_builtin_vars(
-    config: &Config,
-) -> Result<HashMap<&str, Value>, Box<dyn std::error::Error>> {
+#[derive(Serialize, Debug)]
+pub struct BuiltinVars {
+    // system vars
+    pub distro: String,
+    pub os: String,
+    pub family: String,
+    pub arch: String,
+
+    // user vars
+    pub hostname: String,
+    pub machine: String,
+    pub roles: Vec<String>,
+    pub user: String,
+    pub home: String,
+}
+
+impl BuiltinVars {
+    pub fn to_mapping(&self) -> Mapping {
+        let Value::Mapping(res) = serde_yaml::to_value(self)
+            .expect("BuiltinVars.serialize should not return errors")
+        else {
+            unreachable!("BuiltinVars should always serialize to a mapping");
+        };
+
+        res
+    }
+}
+
+// TODO: consider including sources as a var (could then change ProvisionInfo to just be vars...)
+pub fn get_builtin_vars() -> Result<BuiltinVars, Box<dyn std::error::Error>> {
     let SystemVars {
         distro,
         os,
@@ -33,28 +59,18 @@ pub fn get_builtin_vars(
         arch,
     } = get_system_vars()?;
     let hostname = hostname::get()?.to_string_lossy().to_string();
-    let Machine {
-        name: machine,
-        roles,
-    } = get_current_machine(config, &hostname)?;
 
-    Ok(HashMap::from([
-        // system vars
-        ("os", os.to_string().into()),
-        ("family", family.to_string().into()),
-        ("arch", arch.to_string().into()),
-        ("distro", distro.to_string().into()),
-        // config vars
-        ("hostname", hostname.into()),
-        ("machine", machine.into()),
-        ("roles", get_roles(roles).into()),
-        ("user", whoami::username().into()),
-        ("home", get_home_dir()?.into()),
-    ]))
-}
-
-fn get_roles(roles: Vec<String>) -> Vec<Value> {
-    roles.into_iter().map(Value::String).collect()
+    Ok(BuiltinVars {
+        distro,
+        os,
+        family,
+        arch,
+        hostname: hostname.clone(),
+        machine: hostname,
+        roles: vec![],
+        user: whoami::username(),
+        home: get_home_dir()?,
+    })
 }
 
 fn get_home_dir() -> Result<String, String> {
@@ -63,23 +79,6 @@ fn get_home_dir() -> Result<String, String> {
         .as_os_str()
         .to_string_lossy()
         .into())
-}
-
-fn get_current_machine(
-    config: &Config,
-    hostname: &str,
-) -> Result<Machine, Box<dyn std::error::Error>> {
-    let machine = config.machine.clone().unwrap_or_else(|| hostname.into());
-
-    Ok(config
-        .machines
-        .iter()
-        .find(|m| m.name == machine)
-        .cloned()
-        .unwrap_or(Machine {
-            name: machine,
-            roles: vec![],
-        }))
 }
 
 #[derive(Clone, Copy, EnumIter, Display, EnumString)]

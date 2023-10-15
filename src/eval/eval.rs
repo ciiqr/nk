@@ -1,8 +1,9 @@
 use crate::{
     plugins::Plugin,
     state::{self, Condition},
+    vars::BuiltinVars,
 };
-use rhai::{Engine, Scope};
+use rhai::{serde::to_dynamic, Engine, Scope};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use serde_yaml::Value;
@@ -13,25 +14,14 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
-    pub fn new(vars: HashMap<&str, Value>) -> Self {
-        let mut global_scope = Scope::new();
-        for (k, var) in vars {
-            match var {
-                Value::Null => global_scope.push_constant(k, ()),
-                Value::Bool(v) => global_scope.push_constant(k, v),
-                Value::Number(v) => global_scope.push_constant(k, v),
-                Value::String(v) => global_scope.push_constant(k, v),
-                Value::Sequence(v) => global_scope.push_constant(k, v),
-                Value::Mapping(v) => global_scope.push_constant(k, v),
-                Value::Tagged(v) => global_scope.push_constant(k, v),
-            };
-        }
+    pub fn new(builtin_vars: &BuiltinVars) -> Self {
+        let vars = builtin_vars.to_mapping();
 
         // setup engine
         let mut engine = Engine::new();
         #[allow(deprecated)]
         engine.on_var(move |name, _index, _context| {
-            Ok(global_scope.get_value(name))
+            Ok(to_dynamic(vars.get(name)).ok())
         });
 
         Evaluator { engine }
