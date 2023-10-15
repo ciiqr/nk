@@ -18,13 +18,21 @@ impl Evaluator {
         let mut engine = Engine::new();
         #[allow(deprecated)]
         engine.on_var(move |name, _index, _context| {
-            Ok(to_dynamic(global_vars.get(name)).ok())
+            Ok(match global_vars.get(name).unwrap_or(&Value::Null) {
+                Value::Null => None,
+                Value::Bool(v) => Some(to_dynamic(v)?),
+                Value::Number(v) => Some(to_dynamic(v)?),
+                Value::String(v) => Some(to_dynamic(v)?),
+                Value::Sequence(v) => Some(to_dynamic(v)?),
+                Value::Mapping(v) => Some(to_dynamic(v)?),
+                Value::Tagged(v) => Some(to_dynamic(v)?),
+            })
         });
 
         Evaluator { engine }
     }
 
-    pub fn eval_conditions(
+    fn eval_conditions(
         &self,
         conditions: &[Condition],
         scope: &mut Scope,
