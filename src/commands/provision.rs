@@ -6,7 +6,7 @@ use crate::{
     resolve::{resolve, ResolveOptions},
     root::{ensure_not_root, sudo_prompt},
     sort::sort_execution_sets,
-    vars::get_builtin_vars,
+    vars::get_global_vars,
 };
 use console::style;
 use jsonschema::JSONSchema;
@@ -24,11 +24,11 @@ pub async fn provision(
     // TODO: if this is insufficient, may want to consider running sudo periodically during the provision (to refresh the timeout)
     sudo_prompt()?;
 
-    // initialize builtin vars
-    let builtin_vars = get_builtin_vars()?;
+    // initialize global vars
+    let global_vars = get_global_vars()?;
 
     // initialize evaluator
-    let evaluator = Evaluator::new(&builtin_vars);
+    let evaluator = Evaluator::new(global_vars.clone());
 
     // load plugins
     let plugins = load_plugins(&config, &evaluator).await?;
@@ -36,7 +36,7 @@ pub async fn provision(
     // resolve state
     let resolved = resolve(
         &config,
-        &builtin_vars,
+        &global_vars,
         &evaluator,
         &plugins,
         &ResolveOptions { render: true },

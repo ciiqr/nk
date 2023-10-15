@@ -1,12 +1,11 @@
 use crate::{
     plugins::Plugin,
     state::{self, Condition},
-    vars::BuiltinVars,
 };
 use rhai::{serde::to_dynamic, Engine, Scope};
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
-use serde_yaml::Value;
+use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
 pub struct Evaluator {
@@ -14,14 +13,12 @@ pub struct Evaluator {
 }
 
 impl Evaluator {
-    pub fn new(builtin_vars: &BuiltinVars) -> Self {
-        let vars = builtin_vars.to_mapping();
-
+    pub fn new(global_vars: Mapping) -> Self {
         // setup engine
         let mut engine = Engine::new();
         #[allow(deprecated)]
         engine.on_var(move |name, _index, _context| {
-            Ok(to_dynamic(vars.get(name)).ok())
+            Ok(to_dynamic(global_vars.get(name)).ok())
         });
 
         Evaluator { engine }
@@ -60,7 +57,7 @@ impl Evaluator {
                     .collect::<Vec<(_, _)>>()
             })
             .filter_map(|(g, p)| {
-                match self.eval_conditions(&g.when, &mut rhai::Scope::new()) {
+                match self.eval_conditions(&g.when, &mut Scope::new()) {
                     Ok(false) => None,
                     Ok(true) => Some(Ok(g)),
                     Err(e) => Some(Err(format!(

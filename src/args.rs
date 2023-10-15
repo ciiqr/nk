@@ -34,6 +34,10 @@ pub enum Commands {
     #[command(alias = "r")]
     Resolve(ResolveArgs),
 
+    /// Configure global variables
+    #[command(subcommand)]
+    Var(VarSubcommand),
+
     /// Generate shell completions
     #[command(after_long_help = COMPLETION_EXAMPLES_HELP.as_str())]
     Completion(CompletionArgs),
@@ -55,6 +59,13 @@ pub enum PluginSubcommand {
     /// Generate the assets for releasing a plugin
     #[command(after_long_help = PACK_HELP.as_str())]
     Pack(PackArgs),
+}
+
+#[derive(Debug, Subcommand)]
+pub enum VarSubcommand {
+    /// Set a global variable
+    #[command(after_long_help = VAR_SET_HELP.as_str())]
+    Set(VarSetArgs),
 }
 
 pub struct CompletionFile {
@@ -118,6 +129,12 @@ lazy_static! {
             "  - ie. `when: [os == \"macos\", arch == \"aarch64\"]`, will produce `{plugin}-macos-aarch64.tar.gz`",
             "  - For now, anything more complicated will need to be packed manually"
         ].join("\n")
+    );
+    static ref VAR_SET_HELP: String = format!(
+        "{}\n{}\n{}",
+        style("Examples:").underlined().bold(),
+        "  $ nk var set machine 'some-machine'",
+        "  $ nk var set roles '[some, roles]'"
     );
 }
 
@@ -188,6 +205,17 @@ pub struct PackArgs {
     /// Path to a plugin.yml file
     #[arg(value_name = "path", required = true)]
     pub paths: Vec<PathBuf>,
+}
+
+#[derive(Debug, Args)]
+pub struct VarSetArgs {
+    /// Variable name
+    #[arg(value_name = "name")]
+    pub name: String,
+
+    /// Variable value (as yaml)
+    #[arg(value_name = "value")]
+    pub value: String,
 }
 
 #[derive(Debug, Subcommand)]

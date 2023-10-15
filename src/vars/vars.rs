@@ -1,9 +1,10 @@
 use home::home_dir;
 use os_info::Type;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_yaml::{Mapping, Value};
-use std::env;
 use std::process::Command;
+use std::str::FromStr;
+use std::{env, path::PathBuf};
 use strum::{Display, EnumIter, EnumString};
 
 pub struct SystemVars {
@@ -51,7 +52,7 @@ impl BuiltinVars {
 }
 
 // TODO: consider including sources as a var (could then change ProvisionInfo to just be vars...)
-pub fn get_builtin_vars() -> Result<BuiltinVars, Box<dyn std::error::Error>> {
+fn get_builtin_vars() -> Result<BuiltinVars, Box<dyn std::error::Error>> {
     let SystemVars {
         distro,
         os,
@@ -66,11 +67,71 @@ pub fn get_builtin_vars() -> Result<BuiltinVars, Box<dyn std::error::Error>> {
         family,
         arch,
         hostname: hostname.clone(),
-        machine: hostname,
-        roles: vec![],
+        machine: hostname, // defaults to hostname, override with: nk var set machine 'some-machine'
+        roles: vec![], // defaults to empty list, override with: nk var set roles '[some, roles]'
         user: whoami::username(),
         home: get_home_dir()?,
     })
+}
+
+#[derive(Serialize, Deserialize, Debug, Default)]
+pub struct Globals {
+    pub vars: Mapping,
+}
+
+impl Globals {
+    pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
+        let path = PathBuf::from_str(&shellexpand::tilde("~/.nk/globals.yml"))?;
+
+        let contents = match std::fs::read_to_string(&path) {
+            Ok(val) => Ok(Some(val)),
+            Err(e) => match e.kind() {
+                std::io::ErrorKind::NotFound => Ok(None),
+                _ => Err(format!("{}: {}", e, path.display())),
+            },
+        }?;
+
+        if let Some(contents) = contents {
+            Ok(serde_yaml::from_str(&contents)?)
+        } else {
+            Ok(Self::default())
+        }
+    }
+
+    pub fn save(&self) -> Result<(), Box<dyn std::error::Error>> {
+        // TODO: write atomically?
+        // TODO: lock the file while we're writing?
+        let path = PathBuf::from_str(&shellexpand::tilde("~/.nk/globals.yml"))?;
+
+        // write globals.yml
+        let file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .open(&path)
+            .map_err(|e| {
+                format!(
+                    "{e}: nk globals \"{}\" should be writable...",
+                    path.display()
+                )
+            })?;
+        serde_yaml::to_writer(file, &self).map_err(|e| {
+            format!(
+                "{e}: nk globals \"{}\" should be writable...",
+                path.display()
+            )
+        })?;
+
+        Ok(())
+    }
+}
+
+pub fn get_global_vars() -> Result<Mapping, Box<dyn std::error::Error>> {
+    let mut vars = get_builtin_vars()?.to_mapping();
+
+    let globals = Globals::load()?;
+    vars.extend(globals.vars);
+
+    Ok(vars)
 }
 
 fn get_home_dir() -> Result<String, String> {

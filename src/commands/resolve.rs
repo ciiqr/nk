@@ -5,7 +5,7 @@ use crate::{
     plugins::load_plugins,
     resolve::resolve as resolveState,
     resolve::ResolveOptions,
-    vars::get_builtin_vars,
+    vars::get_global_vars,
 };
 
 // TODO: wrap most errors in our own, more user friendly error
@@ -13,11 +13,11 @@ pub async fn resolve(
     args: ResolveArgs,
     config: Config,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // initialize builtin vars
-    let builtin_vars = get_builtin_vars()?;
+    // initialize global vars
+    let global_vars = get_global_vars()?;
 
     // initialize evaluator
-    let evaluator = Evaluator::new(&builtin_vars);
+    let evaluator = Evaluator::new(global_vars.clone());
 
     // load plugins
     let plugins = load_plugins(&config, &evaluator).await?;
@@ -25,7 +25,7 @@ pub async fn resolve(
     // resolve state
     let resolved = resolveState(
         &config,
-        &builtin_vars,
+        &global_vars,
         &evaluator,
         &plugins,
         &ResolveOptions {

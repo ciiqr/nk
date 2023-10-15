@@ -5,8 +5,8 @@ use crate::{
     plugins::Plugin,
     render::render_group,
     state::{self, ResolvedGroup},
-    vars::BuiltinVars,
 };
+use serde_yaml::Mapping;
 
 pub struct ResolveOptions {
     pub render: bool,
@@ -14,7 +14,7 @@ pub struct ResolveOptions {
 
 pub fn resolve(
     config: &Config,
-    builtin_vars: &BuiltinVars,
+    global_vars: &Mapping,
     evaluator: &Evaluator,
     plugins: &[Plugin],
     options: &ResolveOptions,
@@ -30,7 +30,7 @@ pub fn resolve(
         .iter()
         .flat_map(|p| p.definition.dependencies.clone().into_values())
         .fold(
-            ResolvedGroup::new(builtin_vars.to_mapping()),
+            ResolvedGroup::new(global_vars.clone()),
             merge_plugin_dependencies,
         );
 
