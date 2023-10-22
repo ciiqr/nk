@@ -1,7 +1,6 @@
 use crate::{
     args::PackArgs,
-    extensions::SerdeDeserializeFromYamlPath,
-    plugins::{Manifest, ManifestAssets, ManifestPlugin, PluginDefinition},
+    plugins::{Manifest, ManifestAssets, ManifestPlugin, PluginFile},
     state::Condition,
     vars::{SystemArch, SystemDistro, SystemFamily, SystemOs},
 };
@@ -23,18 +22,14 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     for plugin_yml_path in args.paths {
         // load plugin info
-        let PluginDefinition {
-            name,
-            when,
-            executable,
-            provision: _,
-            after: _,
-            dependencies: _,
-            schema: _,
-        } = match PluginDefinition::from_yaml_file(&plugin_yml_path) {
-            Ok(val) => Ok(val),
-            Err(e) => Err(format!("{}: {}", e, plugin_yml_path.display())),
-        }?;
+        let plugin_file = PluginFile::from_yaml_file(&plugin_yml_path)?;
+
+        // get default name (name in unconditional partial)
+        let default_name = plugin_file
+            .partials
+            .iter()
+            .filter(|p| p.when.as_ref().map_or(true, Vec::is_empty))
+            .find_map(|p| p.name.clone());
 
         // resolve path to plugin.yml
         let canonical_path = match plugin_yml_path.canonicalize() {
@@ -46,37 +41,48 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
             .parent()
             .ok_or("could not determine plugin parent")?;
 
-        // determine asset filename
-        let filename = get_asset_filename(&name, &when);
-        let file = format!("{filename}.tar.gz");
+        for partial in plugin_file.partials {
+            let when = partial.when.unwrap_or_default();
+            let name = match partial.name {
+                Some(name) => name,
+                None => default_name.clone().ok_or("must provide either a default name (in an unconditional partial), or a name along with each executable partial")?,
+            };
 
-        // generate tar.gz
-        let tar_file = OpenOptions::new()
-            .write(true)
-            .create(true)
-            .open(args.output.join(&file))
-            .map_err(|e| {
-                format!(
-                    "{e}: out path \"{}\" should be writable...",
-                    args.output.display()
-                )
-            })?;
-        let encoder = GzEncoder::new(tar_file, Compression::default());
-        let mut tar = Builder::new(encoder);
+            // NOTE: each partial with an executable is packed on its own
+            if let Some(executable) = partial.executable {
+                // determine asset filename
+                let filename = get_asset_filename(&name, &when);
+                let file = format!("{filename}.tar.gz");
 
-        // append executable & plugin.yml to tar
-        // TODO: probably need a way of packaging additional files
-        tar.append_path_with_name(
-            canonical_parent.join(&executable),
-            executable,
-        )?;
-        tar.append_path_with_name(plugin_yml_path, "plugin.yml")?;
+                // generate tar.gz
+                let tar_file = OpenOptions::new()
+                    .write(true)
+                    .create(true)
+                    .open(args.output.join(&file))
+                    .map_err(|e| {
+                        format!(
+                            "{e}: out path \"{}\" should be writable...",
+                            args.output.display()
+                        )
+                    })?;
+                let encoder = GzEncoder::new(tar_file, Compression::default());
+                let mut tar = Builder::new(encoder);
 
-        // append plugin to manifest
-        manifest.plugins.push(ManifestPlugin {
-            name,
-            assets: vec![ManifestAssets { file, when }],
-        });
+                // append executable & plugin.yml to tar
+                // TODO: probably need a way of packaging additional files
+                tar.append_path_with_name(
+                    canonical_parent.join(&executable),
+                    executable,
+                )?;
+                tar.append_path_with_name(&plugin_yml_path, "plugin.yml")?;
+
+                // append plugin to manifest
+                manifest.plugins.push(ManifestPlugin {
+                    name: name.clone(),
+                    assets: vec![ManifestAssets { file, when }],
+                });
+            }
+        }
     }
 
     // write manifest.yml

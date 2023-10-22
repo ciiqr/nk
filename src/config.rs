@@ -135,12 +135,14 @@ where
     D: Deserializer<'de>,
 {
     let paths: Vec<String> = Deserialize::deserialize(deserializer)?;
-    // TODO: maybe std::path::absolute once stable?
+
     paths
         .iter()
         .map(|s| {
-            PathBuf::from_str(&shellexpand::tilde(&s)).map_err(D::Error::custom)
+            PathBuf::from_str(&shellexpand::tilde(&s))
+                .map(|e| std::fs::canonicalize(e).map_err(D::Error::custom))
+                .map_err(D::Error::custom)
         })
         // TODO: maybe consider partitioning and showing all the errors instead...
-        .collect::<Result<Vec<_>, _>>()
+        .collect::<Result<Result<Vec<_>, _>, _>>()?
 }

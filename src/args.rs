@@ -2,6 +2,7 @@ use clap::{arg, ArgAction, Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use console::style;
 use lazy_static::lazy_static;
+use std::fmt::Write;
 use std::{fmt, path::PathBuf};
 
 #[derive(Parser)]
@@ -97,12 +98,12 @@ lazy_static! {
         style("Examples:").underlined().bold(),
         COMPLETION_FILES
             .iter()
-            .map(|e| format!(
-                "  $ nk completion {} > {}\n",
+            .fold(String::new(), |mut output, e| {
+                let _ = writeln!(output, "  $ nk completion {} > {}",
                 e.shell,
-                e.path.display()
-            ))
-            .collect::<String>()
+                e.path.display());
+                output
+            })
     );
     static ref LINK_HELP: String = format!(
         "{}\n{}\n{}",

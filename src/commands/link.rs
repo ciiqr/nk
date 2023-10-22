@@ -1,7 +1,6 @@
-use crate::{
-    args::LinkArgs, extensions::SerdeDeserializeFromYamlPath,
-    plugins::PluginDefinition,
-};
+use itertools::Itertools;
+
+use crate::{args::LinkArgs, plugins::PluginFile};
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -16,13 +15,22 @@ pub fn link(args: &LinkArgs) -> Result<(), Box<dyn std::error::Error>> {
 
     for path in &args.paths {
         // load plugin info
-        let definition = match PluginDefinition::from_yaml_file(path) {
-            Ok(val) => Ok(val),
-            Err(e) => Err(format!("{}: {}", e, path.display())),
-        }?;
+        let plugin_file = PluginFile::from_yaml_file(path)?;
+
+        // get name
+        let names: Vec<_> = plugin_file
+            .partials
+            .into_iter()
+            .filter_map(|p| p.name)
+            .unique()
+            .collect();
+        if names.len() > 1 {
+            return Err("multiple names not currently supported".into());
+        }
+        let name = names.first().ok_or("missing required field: name")?;
 
         // delete existing plugin dir
-        let plugin_dir = nk_plugins_dir.join(definition.name);
+        let plugin_dir = nk_plugins_dir.join(name);
         if plugin_dir.try_exists()? {
             fs::remove_dir_all(&plugin_dir)?;
         }

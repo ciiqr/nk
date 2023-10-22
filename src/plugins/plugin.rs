@@ -1,8 +1,10 @@
 use crate::{
-    eval::DeclaredState,
-    extensions::SerdeDeserializeFromYamlPath,
+    eval::{DeclaredState, Evaluator},
     state::{Condition, Declaration, RawDeclaration},
-    utils::deserialize_map_to_map_of_named,
+    utils::{
+        deserialize_map_to_map_of_named,
+        deserialize_map_to_map_of_named_optional,
+    },
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
@@ -43,6 +45,68 @@ pub struct PluginDefinition {
 }
 
 #[serde_as]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Eq, Default)]
+#[serde(deny_unknown_fields)]
+pub struct PluginDefinitionPartial {
+    pub name: Option<String>,
+    pub executable: Option<String>,
+    pub provision: Option<PluginProvisionDefinition>,
+
+    #[serde_as(deserialize_as = "Option<OneOrMany<_>>")]
+    pub when: Option<Vec<Condition>>,
+
+    #[serde_as(deserialize_as = "Option<OneOrMany<_>>")]
+    pub after: Option<Vec<String>>,
+
+    #[serde(
+        default,
+        deserialize_with = "deserialize_map_to_map_of_named_optional::<RawDeclaration, _, _>"
+    )]
+    pub dependencies: Option<HashMap<String, Declaration>>,
+
+    pub schema: Option<Value>,
+}
+
+impl TryInto<PluginDefinition> for PluginDefinitionPartial {
+    type Error = Box<dyn std::error::Error>;
+
+    fn try_into(self) -> Result<PluginDefinition, Self::Error> {
+        Ok(PluginDefinition {
+            name: self.name.ok_or("missing required field, at least one matching partial must have: name")?,
+            executable: self
+                .executable
+                .ok_or("missing required field, at least one matching partial must have: executable")?,
+            provision: self
+                .provision
+                .ok_or("missing required field, at least one matching partial must have: provision")?,
+            when: self.when.unwrap_or_default(),
+            after: self.after.unwrap_or_default(),
+            dependencies: self.dependencies.unwrap_or_default(),
+            schema: self.schema.ok_or("missing required field, at least one matching partial must have: schema")?,
+        })
+    }
+}
+
+#[derive(Debug)]
+pub struct PluginFile {
+    pub partials: Vec<PluginDefinitionPartial>,
+}
+
+impl PluginFile {
+    pub fn from_yaml_file(
+        path: &PathBuf,
+    ) -> Result<PluginFile, Box<dyn std::error::Error>> {
+        let contents = std::fs::read_to_string(path)?;
+
+        let partials = serde_yaml::Deserializer::from_str(&contents)
+            .map(PluginDefinitionPartial::deserialize)
+            .collect::<Result<Vec<_>, _>>()?;
+
+        Ok(PluginFile { partials })
+    }
+}
+
+#[serde_as]
 #[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 // TODO: maybe bad name...
@@ -80,20 +144,62 @@ impl Plugin {
     pub fn from_path(
         path: PathBuf,
         config_index: usize,
-    ) -> Result<Plugin, Box<dyn std::error::Error>> {
+        evaluator: &Evaluator,
+    ) -> Result<Option<Plugin>, Box<dyn std::error::Error>> {
         let definition = {
             let plugin_yml = path.join("plugin.yml");
-            match PluginDefinition::from_yaml_file(&plugin_yml) {
-                Ok(val) => Ok(val),
-                Err(e) => Err(format!("{}: {}", e, plugin_yml.display())),
-            }?
+
+            // load plugin info
+            let plugin_file = PluginFile::from_yaml_file(&plugin_yml)?;
+
+            // filter partials
+            let partials =
+                evaluator.filter_plugin_partials(plugin_file.partials)?;
+
+            // no partials match
+            if partials.is_empty() {
+                return Ok(None);
+            }
+
+            // merge partials
+            let partial = partials
+                .into_iter()
+                .reduce(|mut acc, partial| {
+                    if partial.name.is_some() {
+                        acc.name = partial.name;
+                    }
+                    if partial.executable.is_some() {
+                        acc.executable = partial.executable;
+                    }
+                    if partial.provision.is_some() {
+                        acc.provision = partial.provision;
+                    }
+                    if partial.when.is_some() {
+                        // TODO: merge instead... (doesn't matter atm, but might later)
+                        acc.when = partial.when;
+                    }
+                    if partial.after.is_some() {
+                        acc.after = partial.after;
+                    }
+                    if partial.dependencies.is_some() {
+                        acc.dependencies = partial.dependencies;
+                    }
+                    if partial.schema.is_some() {
+                        acc.schema = partial.schema;
+                    }
+                    acc
+                })
+                .unwrap_or_default();
+
+            // partial into PluginDefinition
+            partial.try_into()?
         };
 
-        Ok(Plugin {
+        Ok(Some(Plugin {
             path,
             definition,
             config_index,
-        })
+        }))
     }
 
     pub fn provision<'a>(
@@ -195,7 +301,7 @@ pub struct ProvisionStateOutput {
 }
 
 #[derive(Deserialize, Debug, Clone)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "snake_case")]
 pub enum ProvisionStateStatus {
     Failed,
     Success,

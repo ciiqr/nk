@@ -20,7 +20,6 @@ pub struct Group {
     pub declarations: HashMap<String, Declaration>,
 }
 
-#[serde_as]
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ResolvedGroup {
     #[serde(default)]

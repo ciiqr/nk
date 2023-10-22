@@ -1,10 +1,9 @@
 use crate::{
-    plugins::Plugin,
+    plugins::{Plugin, PluginDefinitionPartial},
     state::{self, Condition},
 };
 use rhai::{serde::to_dynamic, Engine, Scope};
 use serde::{Deserialize, Serialize};
-use serde_with::serde_as;
 use serde_yaml::{Mapping, Value};
 use std::collections::HashMap;
 
@@ -78,6 +77,27 @@ impl Evaluator {
                 }
             })
             .collect()
+    }
+
+    pub fn filter_plugin_partials(
+        &self,
+        partials: Vec<PluginDefinitionPartial>,
+    ) -> Result<Vec<PluginDefinitionPartial>, Box<dyn std::error::Error>> {
+        let mut filtered_partials = Vec::new();
+
+        for partial in partials {
+            let when = partial.when.clone().unwrap_or_default();
+
+            match self.eval_conditions(&when, &mut Scope::new()) {
+                Ok(true) => {
+                    filtered_partials.push(partial);
+                }
+                Err(e) => Err(e)?,
+                _ => (),
+            }
+        }
+
+        Ok(filtered_partials)
     }
 
     pub fn filter_plugins(
@@ -161,7 +181,6 @@ impl Evaluator {
 pub type ExecutionSets = Vec<(Plugin, Vec<DeclaredState>)>;
 
 // TODO: rename?
-#[serde_as]
 #[derive(Serialize, Deserialize, Debug, Hash, Clone, PartialEq, Eq)]
 pub struct DeclaredState {
     pub declaration: String,

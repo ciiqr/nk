@@ -181,7 +181,7 @@ pub async fn load_plugins(
              async move {
                 Ok::<_, Box<dyn std::error::Error>>(match &p.source {
                     PluginSource::Local { source } => vec![
-                        Some(Plugin::from_path(source.into(), i))
+                        Plugin::from_path(source.into(), i, evaluator)?
                     ],
                     PluginSource::Github {
                         owner,
@@ -199,7 +199,7 @@ pub async fn load_plugins(
                                 return Ok(vec![None]);
                             }
 
-                            vec![Some(Plugin::from_path(plugin_dir, i))]
+                            vec![Plugin::from_path(plugin_dir, i, evaluator)?]
                         }else {
                             let manifest =
                                 get_release_manifest(owner, repo, version)
@@ -219,19 +219,18 @@ pub async fn load_plugins(
                                     return Ok(None);
                                 }
 
-                                Ok::<_, Box<dyn std::error::Error>>(Some(Plugin::from_path(plugin_dir, i)))
+                                Plugin::from_path(plugin_dir, i, evaluator)
                             }).collect::<Result<Vec<_>, _>>()?
                         }
                     }
                 })
             }
         })).await.into_iter()
-        // TODO: fix this (we're just ignoring errors...)
-        .filter_map(Result::ok)
+        .collect::<Result<Vec<_>, _>>()?
+        .into_iter()
         .flatten()
         .flatten()
-        .collect::<Result<_, _>>()?;
-
+        .collect::<Vec<_>>();
     // filter plugins for os
     let plugins = evaluator.filter_plugins(all_plugins)?;
 
