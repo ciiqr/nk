@@ -1,8 +1,12 @@
 use crate::args::Arguments;
 use lazy_static::lazy_static;
+use path_clean::PathClean;
 use regex::Regex;
 use serde::{de::Error, Deserialize, Deserializer};
-use std::{path::PathBuf, str::FromStr};
+use std::{
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
@@ -140,9 +144,23 @@ where
         .iter()
         .map(|s| {
             PathBuf::from_str(&shellexpand::tilde(&s))
-                .map(|e| std::fs::canonicalize(e).map_err(D::Error::custom))
+                .map(|e| absolute_path(e).map_err(D::Error::custom))
                 .map_err(D::Error::custom)
         })
         // TODO: maybe consider partitioning and showing all the errors instead...
         .collect::<Result<Result<Vec<_>, _>, _>>()?
+}
+
+pub fn absolute_path(path: impl AsRef<Path>) -> std::io::Result<PathBuf> {
+    let path = path.as_ref();
+
+    let absolute_path = if path.is_absolute() {
+        path.to_path_buf()
+    } else {
+        let current_dir = std::env::current_dir()?;
+        current_dir.join(path)
+    }
+    .clean();
+
+    Ok(absolute_path)
 }
