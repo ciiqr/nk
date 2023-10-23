@@ -5,6 +5,7 @@ use crate::{
     vars::{SystemArch, SystemDistro, SystemFamily, SystemOs},
 };
 use flate2::{write::GzEncoder, Compression};
+use itertools::Itertools;
 use std::fs::{self, OpenOptions};
 use strum::IntoEnumIterator;
 use tar::Builder;
@@ -24,12 +25,17 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
         // load plugin info
         let plugin_file = PluginFile::from_yaml_file(&plugin_yml_path)?;
 
-        // get default name (name in unconditional partial)
-        let default_name = plugin_file
+        // get name
+        let names: Vec<_> = plugin_file
             .partials
             .iter()
-            .filter(|p| p.when.as_ref().map_or(true, Vec::is_empty))
-            .find_map(|p| p.name.clone());
+            .filter_map(|p| p.name.clone())
+            .unique()
+            .collect();
+        if names.len() > 1 {
+            return Err("multiple names not currently supported".into());
+        }
+        let name = names.first().ok_or("missing required field: name")?;
 
         // resolve path to plugin.yml
         let canonical_path = match plugin_yml_path.canonicalize() {
@@ -41,17 +47,14 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
             .parent()
             .ok_or("could not determine plugin parent")?;
 
+        let mut assets = vec![];
         for partial in plugin_file.partials {
             let when = partial.when.unwrap_or_default();
-            let name = match partial.name {
-                Some(name) => name,
-                None => default_name.clone().ok_or("must provide either a default name (in an unconditional partial), or a name along with each executable partial")?,
-            };
 
             // NOTE: each partial with an executable is packed on its own
             if let Some(executable) = partial.executable {
                 // determine asset filename
-                let filename = get_asset_filename(&name, &when);
+                let filename = get_asset_filename(name, &when);
                 let file = format!("{filename}.tar.gz");
 
                 // generate tar.gz
@@ -76,13 +79,16 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
                 )?;
                 tar.append_path_with_name(&plugin_yml_path, "plugin.yml")?;
 
-                // append plugin to manifest
-                manifest.plugins.push(ManifestPlugin {
-                    name: name.clone(),
-                    assets: vec![ManifestAssets { file, when }],
-                });
+                // append asset
+                assets.push(ManifestAssets { file, when });
             }
         }
+
+        // append plugin to manifest
+        manifest.plugins.push(ManifestPlugin {
+            name: name.clone(),
+            assets,
+        });
     }
 
     // write manifest.yml
