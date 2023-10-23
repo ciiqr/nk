@@ -34,6 +34,7 @@ jobs:
         run: |
           rustup target add aarch64-apple-darwin
         if: matrix.build.artifact == 'nk-macos-aarch64'
+      - uses: Swatinem/rust-cache@v2
       - name: Build # Linux
         env:
           LDFLAGS: -Wl,--copy-dt-needed-entries
