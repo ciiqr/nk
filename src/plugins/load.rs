@@ -181,7 +181,9 @@ pub async fn load_plugins(
              async move {
                 Ok::<_, Box<dyn std::error::Error>>(match &p.source {
                     PluginSource::Local { source } => vec![
-                        Plugin::from_path(source.into(), i, evaluator)?
+                        Plugin::from_path(source.into(), i, evaluator).map_err(|e| {
+                            format!("{e}: while loading plugin: {}", source.display())
+                        })?
                     ],
                     PluginSource::Github {
                         owner,
