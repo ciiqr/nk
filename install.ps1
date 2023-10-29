@@ -41,6 +41,17 @@ function prepend_to_path() {
     }
 }
 
+function hide_item() {
+    Param (
+        [string]$path
+    )
+
+    $item = Get-Item $path -Force
+    if (!($item.Attributes -band "Hidden")) {
+        $item.Attributes = $item.Attributes -bor "Hidden"
+    }
+}
+
 Write-Output '==> identifying os/arch'
 
 $os = 'windows'
@@ -49,11 +60,15 @@ $arch = identify_arch
 Write-Output '==> download nk'
 
 # paths
-$bin_directory = "${HOME}\.nk\bin"
+$nk_dir = "${HOME}\.nk"
+$bin_directory = "${nk_dir}\bin"
 $nk_path = "${bin_directory}\nk.exe"
 
 # create bin directory
 [void](New-Item -ItemType Directory -Force -Path $bin_directory)
+
+# hide nk dir
+hide_item $nk_dir
 
 # determine nk url
 $nk_url = if ($version -ceq 'latest') {
