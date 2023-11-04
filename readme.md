@@ -2,7 +2,7 @@
 
 configuration management for developers
 
-## setup
+## install
 
 -   Install nk
 
@@ -17,6 +17,27 @@ configuration management for developers
     ```bash
     export PATH="${HOME}/.nk/bin:${PATH}"
     ```
+
+## install (windows)
+
+-   Install nk (via powershell)
+
+    ```powershell
+    Set-ExecutionPolicy Bypass -Scope Process -Force
+    Invoke-Expression ((New-Object System.Net.WebClient).DownloadString(
+        'https://raw.githubusercontent.com/ciiqr/nk/HEAD/install.ps1'
+    ))
+    ```
+
+-   Add to path
+
+    _for current session only, install script already updated user path which will be used for new sessions_
+
+    ```powershell
+    $env:Path = "${HOME}/.nk/bin" + [IO.Path]::PathSeparator + $env:Path
+    ```
+
+## setup
 
 -   Create nk config `./.nk.yml`
 
