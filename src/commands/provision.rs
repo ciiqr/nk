@@ -146,11 +146,18 @@ fn validate(
                     let json_state = serde_json::to_value(state.state.clone())?;
                     if let Err(errors) = schema.validate(&json_state) {
                         for error in errors {
+                            let state_str =
+                                match serde_json::to_string(&state.state)
+                                    .map_err(|e| {
+                                        format!("{e}: {:?}", state.state)
+                                    }) {
+                                    Ok(v) | Err(v) => v,
+                                };
                             println!(
                                 "{}",
                                 style(format!(
-                                    "Error validating '{}' state for '{}' plugin: {}",
-                                    state.declaration, plugin.definition.name, error
+                                    "{error}: validating {}: {} against plugin: {}",
+                                    state.declaration, state_str, plugin.definition.name
                                 ))
                                 .red()
                             );
