@@ -1,6 +1,6 @@
 [package]
 name = "nk"
-version = "0.31.0"
+version = "0.32.0"
 edition = "2021"
 description = "configuration management for developers"
 license = "MIT"
