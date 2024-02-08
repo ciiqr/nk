@@ -24,7 +24,7 @@ jobs:
           # TODO: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.build.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Setup musl
         run: |
           rustup target add x86_64-unknown-linux-musl
@@ -48,7 +48,7 @@ jobs:
         run: cargo build --release
         if: runner.os != 'Linux' && matrix.build.artifact != 'nk-macos-aarch64'
       - name: Upload binary
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build.artifact }}
           path: ${{ matrix.build.path }}
@@ -57,9 +57,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: artifacts
       - name: Create Release

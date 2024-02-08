@@ -14,7 +14,7 @@ jobs:
     name: Bump
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           # NOTE: needs a user token otherwise tag events won't be triggered
           token: ${{ secrets.PAT_GITHUB }}
@@ -35,7 +35,7 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "TAG=${TAG}" >> $GITHUB_ENV
       - name: Wait for validate job to finish
-        uses: lewagon/wait-on-check-action@v1.3.1
+        uses: lewagon/wait-on-check-action@v1.3.3
         with:
           check-name: Validate
           ref: ${{ github.ref }}
