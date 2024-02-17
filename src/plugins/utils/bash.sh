@@ -22,12 +22,59 @@ nk::run_for_output() {
 
     # read output into var
     declare __nk_output
-    __nk_output="$(cat "$__nk_tmp_output")"
+    IFS= read -r -d '' '__nk_output' < "$__nk_tmp_output"
     rm "$__nk_tmp_output"
 
     # export with given name
     # TODO: would prefer a global instead of an env var, but the defult verion of bash on macos doesn't support this yet: declare -g
     export "$__nk_output_var"="$__nk_output"
+
+    # preserve ret code
+    return "$__nk_return_value"
+}
+
+nk::run_for_separated_output() {
+    if [[ "$#" -lt 3 ]]; then
+        echo 'usage: nk::run_for_separated_output <stdout_var> <stderr_var> <command> [<args>...]'
+        return 1
+    fi
+    declare __nk_stdout_var="$1"
+    declare __nk_stderr_var="$2"
+    declare -a __nk_command=("${@:3}")
+
+    # create temp stdout file
+    declare __nk_tmp_stdout
+    __nk_tmp_stdout=$(mktemp) || {
+        declare __nk_return_value="$?"
+        echo 'nk::run_for_separated_output failed to create temporary stdout file'
+        return "$__nk_return_value"
+    }
+    # create temp stderr file
+    declare __nk_tmp_stderr
+    __nk_tmp_stderr=$(mktemp) || {
+        declare __nk_return_value="$?"
+        echo 'nk::run_for_separated_output failed to create temporary stderr file'
+        return "$__nk_return_value"
+    }
+
+    # run
+    declare __nk_return_value='0'
+    "${__nk_command[@]}" > "$__nk_tmp_stdout" 2> "$__nk_tmp_stderr" || __nk_return_value="$?"
+
+    # read stdout into var
+    declare __nk_stdout
+    IFS= read -r -d '' '__nk_stdout' < "$__nk_tmp_stdout"
+    rm "$__nk_tmp_stdout"
+
+    # read stderr into var
+    declare __nk_stderr
+    IFS= read -r -d '' '__nk_stderr' < "$__nk_tmp_stderr"
+    rm "$__nk_tmp_stderr"
+
+    # export with given name
+    # TODO: would prefer a global instead of an env var, but the defult verion of bash on macos doesn't support this yet: declare -g
+    export "$__nk_stdout_var"="$__nk_stdout"
+    export "$__nk_stderr_var"="$__nk_stderr"
 
     # preserve ret code
     return "$__nk_return_value"
