@@ -67,10 +67,10 @@ configuration management for developers
 
 ## local development
 
--   install dependencies and configure hooks
+-   install dependencies and configure hooks (macos only atm, read script to figure out commands for other platforms)
 
 ```bash
-./scripts/initial-setup.sh
+./bin/dev initial setup
 ```
 
 ## resources

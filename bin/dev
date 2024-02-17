@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+
+set -e
+
+declare script_dir
+script_dir="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+declare repo_dir
+repo_dir="$(dirname "$script_dir")"
+
+# load mise environment (in case we're run from outside the project directory)
+eval "$(cd "$repo_dir" && mise hook-env 2> /dev/null)"
+
+dev::usage() {
+    echo 'usage: dev <command>'
+    echo '       dev initial setup    # install app and dev env dependencies'
+    echo '       dev reset            # deletes temp files and sets project back up'
+    echo '       dev start            # run build watcher'
+    echo '       dev lint             # run linters'
+    echo '       dev lint fix         # fix auto-fixable linter errors'
+    exit 1
+}
+
+dev::initial::setup() {
+    cd "$repo_dir"
+
+    echo '==> install brew'
+    if ! type 'brew' > /dev/null 2>&1; then
+        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    fi
+
+    echo '==> install dependencies'
+    brew install \
+        mise \
+        shellcheck
+
+    if ! type 'rustup' > /dev/null 2>&1; then
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s - -y --no-modify-path
+        export PATH="${HOME}/.cargo/bin:${PATH}"
+    fi
+
+    echo '==> configure git hooks'
+    git config --local core.hookspath .hooks
+
+    echo '==> allow mise to load project directory'
+    mise trust --all
+
+    echo '==> dev reset'
+    dev::reset
+
+    echo '==> install cargo deps'
+    cargo install cargo-watch
+}
+
+dev::reset() {
+    cd "$repo_dir"
+
+    echo '==> delete git ignored files'
+    git clean -ffdX
+
+    echo '==> reload mise'
+    mise install
+}
+
+dev::start() {
+    cargo watch -x 'build'
+}
+
+dev::lint() {
+    shellcheck bin/dev
+    cargo clippy --quiet
+    cargo fmt --check
+}
+
+dev::lint::fix() {
+    cargo clippy --quiet --fix --allow-staged --allow-dirty
+    cargo fmt
+}
+
+case "$*" in
+    'initial setup') dev::initial::setup ;;
+    reset) dev::reset ;;
+    start) dev::start ;;
+    lint) dev::lint ;;
+    'lint fix') dev::lint::fix ;;
+    *) dev::usage ;;
+esac
