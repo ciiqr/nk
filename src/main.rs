@@ -14,7 +14,6 @@ mod args;
 mod commands;
 mod config;
 mod eval;
-mod extensions;
 mod merge;
 mod plugins;
 mod render;

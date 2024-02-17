@@ -173,7 +173,7 @@ impl Evaluator {
             }
         }
 
-        Ok(execution_sets.into_iter().map(|(p, v)| (p, v)).collect())
+        Ok(execution_sets.into_iter().collect())
     }
 }
 
