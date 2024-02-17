@@ -35,11 +35,9 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "TAG=${TAG}" >> $GITHUB_ENV
       - name: Wait for validate job to finish
-        uses: lewagon/wait-on-check-action@v1.3.3
+        uses: pentible/wait-for-check-action@v1.0.1
         with:
           check-name: Validate
-          ref: ${{ github.ref }}
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create Tag
         env:
           GIT_AUTHOR_EMAIL: ${{ secrets.GIT_AUTHOR_EMAIL }}
