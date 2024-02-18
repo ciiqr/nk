@@ -38,6 +38,9 @@ dev::initial::setup() {
         export PATH="${HOME}/.cargo/bin:${PATH}"
     fi
 
+    echo '==> install cargo deps'
+    cargo install cargo-edit cargo-watch
+
     echo '==> configure git hooks'
     git config --local core.hookspath .hooks
 
@@ -46,9 +49,6 @@ dev::initial::setup() {
 
     echo '==> dev reset'
     dev::reset
-
-    echo '==> install cargo deps'
-    cargo install cargo-watch
 }
 
 dev::reset() {
