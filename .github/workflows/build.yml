@@ -9,49 +9,36 @@ jobs:
     strategy:
       matrix:
         build:
-          - os: macos-latest
-            path: target/release/nk
-            artifact: nk-macos-x86_64
-          - os: macos-latest
-            path: target/aarch64-apple-darwin/release/nk
-            artifact: nk-macos-aarch64
-          - os: ubuntu-latest
-            path: target/x86_64-unknown-linux-musl/release/nk
-            artifact: nk-linux-x86_64
-          - os: windows-latest
-            path: target/release/nk.exe
-            artifact: nk-windows-x86_64.exe
+          - artifact: nk-macos-x86_64
+            target: x86_64-apple-darwin
+            os: macos-latest
+          - artifact: nk-macos-aarch64
+            target: aarch64-apple-darwin
+            os: macos-latest
+          - artifact: nk-linux-x86_64
+            target: x86_64-unknown-linux-musl
+            os: ubuntu-latest
+          # TODO: aarch64-unknown-linux-musl
+          - artifact: nk-windows-x86_64.exe
+            target: x86_64-pc-windows-msvc
+            os: windows-latest
           # TODO: aarch64-pc-windows-msvc
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: actions/checkout@v4
+      - name: Install target
+        run: rustup target add ${{ matrix.build.target }}
       - name: Setup musl
-        run: |
-          rustup target add x86_64-unknown-linux-musl
-          sudo apt-get install -y musl-tools
-        if: runner.os == 'Linux'
-      - name: Setup Apple Silicon
-        run: |
-          rustup target add aarch64-apple-darwin
-        if: matrix.build.artifact == 'nk-macos-aarch64'
+        run: sudo apt-get install -y musl-tools
+        if: matrix.build.target == 'x86_64-unknown-linux-musl'
       - uses: Swatinem/rust-cache@v2
-      - name: Build # Linux
-        env:
-          LDFLAGS: -Wl,--copy-dt-needed-entries
-          RUSTFLAGS: -C target-feature=+crt-static
-        run: cargo build --release --target x86_64-unknown-linux-musl
-        if: runner.os == 'Linux'
-      - name: Build # Apple Silicon
-        run: cargo build --release --target=aarch64-apple-darwin
-        if: matrix.build.artifact == 'nk-macos-aarch64'
       - name: Build
-        run: cargo build --release
-        if: runner.os != 'Linux' && matrix.build.artifact != 'nk-macos-aarch64'
+        run: cargo build --release --target ${{ matrix.build.target }}
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.build.artifact }}
-          path: ${{ matrix.build.path }}
+          path: target/${{ matrix.build.target }}/release/${{ runner.os == 'Windows' && 'nk.exe' || 'nk' }}
   release:
     name: Release
     needs: build
