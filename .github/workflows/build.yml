@@ -18,11 +18,12 @@ jobs:
           - artifact: nk-linux-x86_64
             target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-          # TODO: aarch64-unknown-linux-musl
           - artifact: nk-windows-x86_64.exe
             target: x86_64-pc-windows-msvc
             os: windows-latest
-          # TODO: aarch64-pc-windows-msvc
+          - artifact: nk-windows-aarch64.exe
+            target: aarch64-pc-windows-msvc
+            os: windows-latest
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: actions/checkout@v4
@@ -30,7 +31,7 @@ jobs:
         run: rustup target add ${{ matrix.build.target }}
       - name: Setup musl
         run: sudo apt-get install -y musl-tools
-        if: matrix.build.target == 'x86_64-unknown-linux-musl'
+        if: endsWith(matrix.build.target, '-musl')
       - uses: Swatinem/rust-cache@v2
       - name: Build
         run: cargo build --release --target ${{ matrix.build.target }}
