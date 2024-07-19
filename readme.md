@@ -70,7 +70,7 @@ configuration management for developers
 -   install dependencies and configure hooks (macos only atm, read script to figure out commands for other platforms)
 
 ```bash
-./bin/dev initial setup
+./bin/dev setup
 ```
 
 ## resources
