@@ -22,7 +22,7 @@ jobs:
         run: cargo install cargo-edit
       - name: Determine New Version
         id: version
-        uses: zwaldowski/semver-release-action@v3
+        uses: zwaldowski/semver-release-action@v4
         with:
           dry_run: true
           bump: ${{ github.event.inputs.bump }}
