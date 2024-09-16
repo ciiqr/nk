@@ -55,4 +55,4 @@ jobs:
 
           echo '==> commit tag'
           git tag "$TAG"
-          git push --atomic origin HEAD "$VERSION"
+          git push --atomic origin HEAD "$TAG"
