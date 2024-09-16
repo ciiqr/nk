@@ -142,6 +142,7 @@ fn get_home_dir() -> Result<String, String> {
         .into())
 }
 
+// TODO: re-order so it's more reasonable to append new values
 #[derive(Clone, Copy, EnumIter, Display, EnumString)]
 #[strum(serialize_all = "snake_case")]
 pub enum SystemDistro {
@@ -180,6 +181,7 @@ pub enum SystemDistro {
     Ubuntu,
     Windows,
     // macos
+    Sequoia,
     Sonoma,
     Ventura,
     Monterey,
@@ -240,6 +242,7 @@ fn get_macos_distro() -> Result<SystemDistro, Box<dyn std::error::Error>> {
     let version = version_string.split('.').collect::<Vec<_>>();
 
     match version[..] {
+        ["15", ..] => Ok(SystemDistro::Sequoia),
         ["14", ..] => Ok(SystemDistro::Sonoma),
         ["13", ..] => Ok(SystemDistro::Ventura),
         ["12", ..] => Ok(SystemDistro::Monterey),
