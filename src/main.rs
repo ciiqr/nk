@@ -1,11 +1,8 @@
-#![warn(clippy::all, clippy::pedantic, clippy::nursery, clippy::cargo)]
+#![warn(clippy::all, clippy::nursery, clippy::cargo, clippy::single_match_else)]
 #![allow(
-    clippy::unnecessary_wraps,
     clippy::multiple_crate_versions,
-    clippy::uninlined_format_args,
     clippy::module_name_repetitions,
     clippy::use_self,
-    clippy::too_many_lines,
     // TODO: fix:
     clippy::future_not_send
 )]

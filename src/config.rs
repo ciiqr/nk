@@ -94,41 +94,40 @@ impl<'de> Deserialize<'de> for PluginSource {
     {
         let source: String = Deserialize::deserialize(deserializer)?;
 
-        match source.chars().nth(1) {
-            Some('~' | '.' | '/') => Ok(PluginSource::Local {
+        if let Some('~' | '.' | '/') = source.chars().nth(1) {
+            Ok(PluginSource::Local {
                 source: PathBuf::from_str(&shellexpand::tilde(&source))
                     .map_err(D::Error::custom)?,
-            }),
-            Some(_) | None => {
-                let captures =
-                    GITHUB_PLUGIN_REGEX.captures(&source).ok_or_else(|| {
-                        D::Error::custom(format!(
-                            "Unrecognized plugin source: {}",
-                            source
-                        ))
-                    })?;
-
-                match (
-                    captures.name("owner"),
-                    captures.name("repo"),
-                    captures.name("version"),
-                    captures.name("plugin"),
-                ) {
-                    (Some(owner), Some(repo), version, plugin) => {
-                        Ok(PluginSource::Github {
-                            owner: owner.as_str().to_string(),
-                            repo: repo.as_str().to_string(),
-                            version: version.map_or(Version::Latest, |v| {
-                                Version::Version(v.as_str().to_string())
-                            }),
-                            plugin: plugin.map(|p| p.as_str().to_string()),
-                        })
-                    }
-                    _ => Err(D::Error::custom(format!(
+            })
+        } else {
+            let captures =
+                GITHUB_PLUGIN_REGEX.captures(&source).ok_or_else(|| {
+                    D::Error::custom(format!(
                         "Unrecognized plugin source: {}",
                         source
-                    ))),
+                    ))
+                })?;
+
+            match (
+                captures.name("owner"),
+                captures.name("repo"),
+                captures.name("version"),
+                captures.name("plugin"),
+            ) {
+                (Some(owner), Some(repo), version, plugin) => {
+                    Ok(PluginSource::Github {
+                        owner: owner.as_str().to_string(),
+                        repo: repo.as_str().to_string(),
+                        version: version.map_or(Version::Latest, |v| {
+                            Version::Version(v.as_str().to_string())
+                        }),
+                        plugin: plugin.map(|p| p.as_str().to_string()),
+                    })
                 }
+                _ => Err(D::Error::custom(format!(
+                    "Unrecognized plugin source: {}",
+                    source
+                ))),
             }
         }
     }

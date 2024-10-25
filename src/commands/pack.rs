@@ -61,6 +61,7 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
                 let tar_file = OpenOptions::new()
                     .write(true)
                     .create(true)
+                    .truncate(true)
                     .open(args.output.join(&file))
                     .map_err(|e| {
                         format!(
@@ -95,6 +96,7 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
     let file = std::fs::OpenOptions::new()
         .write(true)
         .create(true)
+        .truncate(true)
         .open(args.output.join("manifest.yml"))
         .map_err(|e| {
             format!(

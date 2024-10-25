@@ -1,4 +1,3 @@
-#![allow(clippy::option_if_let_else)]
 use crate::args::{CompletionArgs, COMPLETION_FILES};
 use clap::Command;
 use clap_complete::generate;
@@ -41,6 +40,7 @@ pub fn completion(
 
             let mut completion_file = OpenOptions::new()
                 .create(true)
+                .truncate(true)
                 .write(true)
                 .open(completion.path.as_path())
                 .expect("completion path should be writable...");

@@ -107,6 +107,7 @@ impl Globals {
         let file = std::fs::OpenOptions::new()
             .write(true)
             .create(true)
+            .truncate(true)
             .open(&path)
             .map_err(|e| {
                 format!(
