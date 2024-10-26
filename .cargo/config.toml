@@ -8,3 +8,6 @@ rustflags = [
     "-L",
     "-Wl,--copy-dt-needed-entries",
 ]
+
+[target.aarch64-unknown-linux-musl]
+linker = "aarch64-linux-gnu-gcc"
