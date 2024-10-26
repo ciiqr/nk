@@ -2,7 +2,7 @@ use super::{Condition, Declaration, RawDeclaration};
 use crate::utils::deserialize_map_to_map_of_named;
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
-use serde_yaml::Mapping;
+use serde_yml::Mapping;
 use std::collections::HashMap;
 
 #[serde_as]

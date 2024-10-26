@@ -1,7 +1,7 @@
 use home::home_dir;
 use os_info::Type;
 use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping, Value};
+use serde_yml::{Mapping, Value};
 use std::process::Command;
 use std::str::FromStr;
 use std::{env, path::PathBuf};
@@ -41,7 +41,7 @@ pub struct BuiltinVars {
 
 impl BuiltinVars {
     pub fn to_mapping(&self) -> Mapping {
-        let Value::Mapping(res) = serde_yaml::to_value(self)
+        let Value::Mapping(res) = serde_yml::to_value(self)
             .expect("BuiltinVars.serialize should not return errors")
         else {
             unreachable!("BuiltinVars should always serialize to a mapping");
@@ -92,7 +92,7 @@ impl Globals {
         }?;
 
         if let Some(contents) = contents {
-            Ok(serde_yaml::from_str(&contents)?)
+            Ok(serde_yml::from_str(&contents)?)
         } else {
             Ok(Self::default())
         }
@@ -115,7 +115,7 @@ impl Globals {
                     path.display()
                 )
             })?;
-        serde_yaml::to_writer(file, &self).map_err(|e| {
+        serde_yml::to_writer(file, &self).map_err(|e| {
             format!(
                 "{e}: nk globals \"{}\" should be writable...",
                 path.display()

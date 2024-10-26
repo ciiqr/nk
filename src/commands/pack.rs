@@ -104,7 +104,7 @@ pub fn pack(args: PackArgs) -> Result<(), Box<dyn std::error::Error>> {
                 args.output.display()
             )
         })?;
-    serde_yaml::to_writer(file, &manifest).map_err(|e| {
+    serde_yml::to_writer(file, &manifest).map_err(|e| {
         format!(
             "{e}: out path \"{}\" should be writable...",
             args.output.display()

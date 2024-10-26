@@ -36,7 +36,7 @@ pub async fn resolve(
     // print state
     match args.output {
         ResolveOutputFormat::Yaml => {
-            print!("{}", serde_yaml::to_string(&resolved)?);
+            print!("{}", serde_yml::to_string(&resolved)?);
         }
         ResolveOutputFormat::Json => {
             println!("{}", serde_json::to_string(&resolved)?);

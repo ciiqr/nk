@@ -8,7 +8,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use serde_with::{serde_as, OneOrMany};
-use serde_yaml::{Mapping, Value};
+use serde_yml::{Mapping, Value};
 use std::{
     collections::HashMap,
     ffi::OsStr,
@@ -98,7 +98,7 @@ impl PluginFile {
     ) -> Result<PluginFile, Box<dyn std::error::Error>> {
         let contents = std::fs::read_to_string(path)?;
 
-        let partials = serde_yaml::Deserializer::from_str(&contents)
+        let partials = serde_yml::Deserializer::from_str(&contents)
             .map(PluginDefinitionPartial::deserialize)
             .collect::<Result<Vec<_>, _>>()?;
 

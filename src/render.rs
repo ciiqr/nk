@@ -1,5 +1,5 @@
 use handlebars::{Handlebars, RenderError};
-use serde_yaml::{Mapping, Value};
+use serde_yml::{Mapping, Value};
 
 use crate::state::{Declaration, ResolvedGroup};
 

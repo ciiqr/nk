@@ -14,7 +14,7 @@ impl File {
     ) -> Result<File, Box<dyn std::error::Error>> {
         let contents = std::fs::read_to_string(&path)?;
 
-        let groups = serde_yaml::Deserializer::from_str(&contents)
+        let groups = serde_yml::Deserializer::from_str(&contents)
             .map(Group::deserialize)
             .collect::<Result<Vec<_>, _>>()?;
 

@@ -34,7 +34,7 @@ impl Config {
             Err(e) => Err(format!("{}: {}", e, path.display())),
         }?;
 
-        let mut conf: Self = serde_yaml::from_str(&contents)?;
+        let mut conf: Self = serde_yml::from_str(&contents)?;
 
         // TODO: maybe there should we a way to flag sources as optional?
         conf.sources.retain(|s| s.exists());

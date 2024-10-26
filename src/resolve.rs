@@ -6,7 +6,7 @@ use crate::{
     render::render_group,
     state::{self, ResolvedGroup},
 };
-use serde_yaml::Mapping;
+use serde_yml::Mapping;
 
 pub struct ResolveOptions {
     pub render: bool,

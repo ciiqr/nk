@@ -1,6 +1,6 @@
 use crate::traits::FromWithName;
 use serde::{Deserialize, Deserializer, Serialize};
-use serde_yaml::Value;
+use serde_yml::Value;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Declaration {
@@ -41,11 +41,11 @@ impl Serialize for Declaration {
 // NOTE: serde_with::OneOrMany doesn't work here (presumably because we're working with raw values...)
 fn one_or_many<'de, D>(
     deserializer: D,
-) -> Result<Vec<serde_yaml::Value>, D::Error>
+) -> Result<Vec<serde_yml::Value>, D::Error>
 where
     D: Deserializer<'de>,
 {
-    let res: serde_yaml::Value = Deserialize::deserialize(deserializer)?;
+    let res: serde_yml::Value = Deserialize::deserialize(deserializer)?;
     match res {
         Value::Sequence(many) => Ok(many),
         one => Ok(vec![one]),

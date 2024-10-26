@@ -1,5 +1,5 @@
 use crate::state::{self, ResolvedGroup};
-use serde_yaml::Value;
+use serde_yml::Value;
 
 pub fn merge_plugin_dependencies(
     mut a: ResolvedGroup,

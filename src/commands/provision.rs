@@ -9,7 +9,7 @@ use crate::{
     vars::get_global_vars,
 };
 use console::style;
-use jsonschema::JSONSchema;
+use jsonschema::Validator;
 use textwrap::indent;
 
 // TODO: wrap most errors in our own, more user friendly error
@@ -140,7 +140,7 @@ fn validate(
     for (plugin, states) in execution_sets {
         let json_schema = serde_json::to_value(&plugin.definition.schema)?;
 
-        match JSONSchema::compile(&json_schema) {
+        match Validator::new(&json_schema) {
             Ok(schema) => {
                 for state in states {
                     let json_state = serde_json::to_value(state.state.clone())?;

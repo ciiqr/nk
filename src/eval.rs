@@ -4,7 +4,7 @@ use crate::{
 };
 use rhai::{serde::to_dynamic, Engine, Scope};
 use serde::{Deserialize, Serialize};
-use serde_yaml::{Mapping, Value};
+use serde_yml::{Mapping, Value};
 use std::collections::HashMap;
 
 pub struct Evaluator {

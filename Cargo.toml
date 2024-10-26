@@ -18,41 +18,39 @@ path = "src/main.rs"
 nix = "0.25.0"
 
 [dependencies]
-shellexpand = "2.1.2"
-serde = { version = "1.0.145", features = ["derive"] }
-serde_yaml = "0.9.13"
-regex = "1.6.0"
-serde_with = "2.0.1"
-rhai = { version = "1.10.1", features = [
+shellexpand = "3.1.0"
+serde = { version = "1.0.213", features = ["derive"] }
+serde_yml = "0.0.12"
+regex = "1.11.1"
+serde_with = "3.11.0"
+rhai = { version = "1.19.0", features = [
     "no_closure",
     "no_custom_syntax",
     "serde",
 ] }
-hostname = "0.3.1"
-serde_json = "1.0.85"
-console = "0.15.2"
-textwrap = "0.15.1"
-handlebars = "4.3.5"
-whoami = "1.2.3"
-home = "0.5.4"
-os_info = { version = "3.5.1", default-features = false }
-itertools = "0.10.5"
-jsonschema = "0.16.1"
+hostname = "0.4.0"
+serde_json = "1.0.132"
+console = "0.15.8"
+textwrap = "0.16.1"
+handlebars = "6.1.0"
+whoami = "1.5.2"
+home = "0.5.9"
+os_info = { version = "3.8.2", default-features = false }
+itertools = "0.13.0"
+jsonschema = "0.25.1"
 topological-sort = "0.2.2"
-lazy_static = "1.4.0"
-tokio = { version = "1.22.0", features = ["full"] }
-reqwest = { version = "0.11.13", features = ["stream"] }
-async-compression = { version = "0.3.15", features = ["futures-io", "gzip"] }
-futures = "0.3.25"
-# TODO: remove async-std once fixed in async-tar
-async-std = { version = "1.6.0", features = ["unstable"] }
-async-tar = "0.4.2"
+lazy_static = "1.5.0"
+tokio = { version = "1.41.0", features = ["full"] }
+reqwest = { version = "0.12.8", features = ["stream"] }
+async-compression = { version = "0.4.17", features = ["futures-io", "gzip"] }
+futures = "0.3.31"
+async-tar = "0.5.0"
 # NOTE: statically link openssl
-openssl = { version = "0.10.45", features = ["vendored"] }
-clap = { version = "4.4.4", features = ["derive"] }
-clap_complete = "4.4.1"
+openssl = { version = "0.10.68", features = ["vendored"] }
+clap = { version = "4.5.20", features = ["derive"] }
+clap_complete = "4.5.35"
 faccess = "0.2.4"
-strum = { version = "0.25.0", features = ["derive"] }
-tar = "0.4.40"
-flate2 = "1.0.27"
+strum = { version = "0.26.3", features = ["derive"] }
+tar = "0.4.42"
+flate2 = "1.0.34"
 path-clean = "1.0.1"

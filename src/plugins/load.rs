@@ -289,7 +289,7 @@ pub async fn get_release_manifest(
     };
 
     let response = reqwest::get(url).await?;
-    let manifest: Manifest = serde_yaml::from_str(&response.text().await?)?;
+    let manifest: Manifest = serde_yml::from_str(&response.text().await?)?;
 
     match version {
         Version::Latest => {
