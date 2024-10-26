@@ -9,20 +9,15 @@ jobs:
     strategy:
       matrix:
         build:
-          - artifact: nk-macos-x86_64
-            target: x86_64-apple-darwin
+          - target: x86_64-apple-darwin
             os: macos-latest
-          - artifact: nk-macos-aarch64
-            target: aarch64-apple-darwin
+          - target: aarch64-apple-darwin
             os: macos-latest
-          - artifact: nk-linux-x86_64
-            target: x86_64-unknown-linux-musl
+          - target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-          - artifact: nk-windows-x86_64.exe
-            target: x86_64-pc-windows-msvc
+          - target: x86_64-pc-windows-msvc
             os: windows-latest
-          - artifact: nk-windows-aarch64.exe
-            target: aarch64-pc-windows-msvc
+          - target: aarch64-pc-windows-msvc
             os: windows-latest
     runs-on: ${{ matrix.build.os }}
     steps:
@@ -32,14 +27,38 @@ jobs:
       - name: Setup musl
         run: sudo apt-get install -y musl-tools
         if: endsWith(matrix.build.target, '-musl')
+      - name: Setup windows
+        run: |
+          # setup perl for bash shell https://github.com/sfackler/rust-openssl/issues/2149#issuecomment-2014064057
+          echo "PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          echo "OPENSSL_SRC_PERL=$((where.exe perl)[0])" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+        if: runner.os == 'Windows'
       - uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --release --target ${{ matrix.build.target }}
+        env:
+          TARGET: ${{ matrix.build.target }}
+        shell: bash
+        run: |
+          declare output
+          output="$(
+            cargo build \
+              --workspace \
+              --release \
+              --target "$TARGET" \
+              --message-format=json \
+              | jq -r '.message.rendered // .executable // empty'
+          )"
+          {
+            echo 'ARTIFACT_PATHS<<EOF'
+            echo "$output"
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.artifact }}
-          path: target/${{ matrix.build.target }}/release/${{ runner.os == 'Windows' && 'nk.exe' || 'nk' }}
+          name: ${{ matrix.build.target }}
+          path: ${{ env.ARTIFACT_PATHS }}
+          if-no-files-found: error
   release:
     name: Release
     needs: build
