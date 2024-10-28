@@ -1,8 +1,9 @@
 name: build
 on:
   push:
-    tags:
-      - v*
+    # TODO:
+    # tags:
+    #   - v*
 jobs:
   build:
     name: Build
@@ -59,32 +60,33 @@ jobs:
           name: ${{ matrix.build.target }}
           path: ${{ env.ARTIFACT_PATHS }}
           if-no-files-found: error
-  release:
-    name: Release
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Download artifacts
-        uses: actions/download-artifact@v4
-        with:
-          path: artifacts
-      - name: Create Release
-        env:
-          GITHUB_USER: ${{ github.repository_owner }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir assets
+  # TODO:
+  # release:
+  #   name: Release
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - name: Download artifacts
+  #       uses: actions/download-artifact@v4
+  #       with:
+  #         path: artifacts
+  #     - name: Create Release
+  #       env:
+  #         GITHUB_USER: ${{ github.repository_owner }}
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       run: |
+  #         mkdir assets
 
-          # move binaries to assets directory
-          for path in artifacts/*; do
-            declare artifact="$(basename "$path")"
-            mv "${path}/nk"* "assets/${artifact}"
-          done
+  #         # move binaries to assets directory
+  #         for path in artifacts/*; do
+  #           declare artifact="$(basename "$path")"
+  #           mv "${path}/nk"* "assets/${artifact}"
+  #         done
 
-          # create release
-          gh release create \
-            --title "$GITHUB_REF_NAME" \
-            --notes '' \
-            "$GITHUB_REF_NAME" \
-            "assets/"*
+  #         # create release
+  #         gh release create \
+  #           --title "$GITHUB_REF_NAME" \
+  #           --notes '' \
+  #           "$GITHUB_REF_NAME" \
+  #           "assets/"*
