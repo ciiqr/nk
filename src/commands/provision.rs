@@ -144,8 +144,9 @@ fn validate(
             Ok(schema) => {
                 for state in states {
                     let json_state = serde_json::to_value(state.state.clone())?;
-                    if let Err(errors) = schema.validate(&json_state) {
-                        for error in errors {
+
+                    if !schema.is_valid(&json_state) {
+                        for error in schema.iter_errors(&json_state) {
                             let state_str =
                                 match serde_json::to_string(&state.state)
                                     .map_err(|e| {
