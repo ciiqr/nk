@@ -3,7 +3,8 @@ use clap_complete::Shell;
 use console::style;
 use lazy_static::lazy_static;
 use std::fmt::Write;
-use std::{fmt, path::PathBuf};
+use std::path::PathBuf;
+use strum::Display;
 
 #[derive(Parser)]
 #[command(about, long_about = None, disable_version_flag = true, version)]
@@ -139,26 +140,29 @@ lazy_static! {
     );
 }
 
+#[derive(Debug, Clone, ValueEnum, Display)]
+#[strum(serialize_all = "snake_case")]
+pub enum ProvisionOutputFormat {
+    Pretty,
+    Raw,
+}
+
 #[derive(Debug, Args)]
 pub struct ProvisionArgs {
+    // TODO: maybe should only be valid if formatter isn't raw?
     /// Whether to print unchanged results.
     #[arg(short, long)]
     pub show_unchanged: bool,
+
+    #[arg(short, long, value_name = "format", default_value_t = ProvisionOutputFormat::Pretty)]
+    pub output: ProvisionOutputFormat,
 }
 
-#[derive(Debug, Clone, ValueEnum)]
+#[derive(Debug, Clone, ValueEnum, Display)]
+#[strum(serialize_all = "snake_case")]
 pub enum ResolveOutputFormat {
     Yaml,
     Json,
-}
-
-impl fmt::Display for ResolveOutputFormat {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            ResolveOutputFormat::Yaml => write!(f, "yaml"),
-            ResolveOutputFormat::Json => write!(f, "json"),
-        }
-    }
 }
 
 #[derive(Debug, Args)]

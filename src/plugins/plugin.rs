@@ -13,7 +13,7 @@ use std::{
     collections::HashMap,
     ffi::OsStr,
     hash::{Hash, Hasher},
-    io::Write,
+    io::{BufRead, BufReader, Write},
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -207,16 +207,18 @@ impl Plugin {
         info: &ProvisionInfo,
         states: &Vec<DeclaredState>,
     ) -> Result<
-        impl Iterator<Item = Result<ProvisionStateOutput, serde_json::Error>> + 'a,
+        impl Iterator<Item = Result<String, std::io::Error>> + 'a,
         Box<dyn std::error::Error>,
     > {
-        let info_json = serde_json::to_string(info)?;
+        let info_json = serde_json::to_string(info)
+            .expect("ProvisionInfo should never fail to serialize");
 
         let mut child = self.execute(["provision", info_json.as_str()])?;
 
         // write states & close
         {
-            let states_json = serde_json::to_string(states)?;
+            let states_json = serde_json::to_string(states)
+                .expect("DeclaredState should never fail to serialize");
 
             let mut child_stdin = child
                 .stdin
@@ -229,11 +231,10 @@ impl Plugin {
             .stdout
             .take()
             .ok_or("couldn't connect to plugin stdout")?;
+        let reader = BufReader::new(stdout);
 
-        // TODO: include plugin information in iterator?
-        // TODO: do something with stderr (include in iterator & log in error states?)
-        Ok(serde_json::Deserializer::from_reader(stdout)
-            .into_iter::<ProvisionStateOutput>())
+        // TODO: do something with stderr (maybe just use duct to forward to stdout & treat line any other output... though would be nice if it could be preserved as stderr, at least for raw mode...)
+        Ok(reader.lines())
     }
 
     fn execute<I, S>(
