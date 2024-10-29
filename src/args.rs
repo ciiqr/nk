@@ -156,6 +156,13 @@ pub struct ProvisionArgs {
 
     #[arg(short, long, value_name = "format", default_value_t = ProvisionOutputFormat::Pretty)]
     pub output: ProvisionOutputFormat,
+
+    /// filter the states
+    /// examples:
+    /// $ nk p 'declaration == "packages"'
+    /// $ nk p 'state == "ffmpeg"'
+    #[clap(verbatim_doc_comment)]
+    pub filter: Option<String>,
 }
 
 #[derive(Debug, Clone, ValueEnum, Display)]

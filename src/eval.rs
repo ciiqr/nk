@@ -175,6 +175,38 @@ impl Evaluator {
 
         Ok(execution_sets.into_iter().collect())
     }
+
+    pub fn filter_execution_sets(
+        &self,
+        execution_sets: &mut ExecutionSets,
+        filter: &str,
+    ) {
+        // filter execution_sets
+        for (_, states) in execution_sets.iter_mut() {
+            states.retain(|state| {
+                // TODO: add plugin info?
+                let mut scope = Scope::new();
+                scope.push_constant("declaration", state.declaration.clone());
+                scope.push_constant_dynamic(
+                    "state",
+                    // TODO: not sure if this expect is k...
+                    rhai::serde::to_dynamic(state.state.clone())
+                        .expect("state to be rhai serializable"),
+                );
+
+                let res = self
+                    .engine
+                    .eval_expression_with_scope::<bool>(&mut scope, filter);
+
+                // TODO: if all states produce an error, show one of them (to help debug strictly invalid filters)
+                // NOTE: errors are treated as the filter not matching
+                matches!(res, Ok(true))
+            });
+        }
+
+        // remove any empty execution sets
+        execution_sets.retain(|(_, states)| !states.is_empty());
+    }
 }
 
 // TODO: really should be fixing the Value type...

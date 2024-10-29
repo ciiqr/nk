@@ -139,6 +139,11 @@ pub async fn provision(
     let mut execution_sets =
         evaluator.match_states_to_plugins(&resolved.declarations, &plugins)?;
 
+    // filter
+    if let Some(filter) = &args.filter {
+        evaluator.filter_execution_sets(&mut execution_sets, filter);
+    }
+
     // sort execution sets
     sort_execution_sets(&mut execution_sets);
 
