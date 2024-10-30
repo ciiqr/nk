@@ -9,16 +9,22 @@ jobs:
     strategy:
       matrix:
         build:
-          - target: x86_64-apple-darwin
+          - platform: macos-x86_64
+            target: x86_64-apple-darwin
             os: macos-latest
-          - target: aarch64-apple-darwin
+          - platform: macos-aarch64
+            target: aarch64-apple-darwin
             os: macos-latest
-          - target: x86_64-unknown-linux-musl
+          - platform: linux-x86_64
+            target: x86_64-unknown-linux-musl
             os: ubuntu-latest
-          - target: x86_64-pc-windows-msvc
+          - platform: windows-x86_64
+            target: x86_64-pc-windows-msvc
             os: windows-latest
-          - target: aarch64-pc-windows-msvc
+          - platform: windows-aarch64
+            target: aarch64-pc-windows-msvc
             os: windows-latest
+
     runs-on: ${{ matrix.build.os }}
     steps:
       - uses: actions/checkout@v4
@@ -56,7 +62,7 @@ jobs:
       - name: Upload binary
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.build.target }}
+          name: ${{ matrix.build.platform }}
           path: ${{ env.ARTIFACT_PATHS }}
           if-no-files-found: error
   release:
@@ -76,10 +82,14 @@ jobs:
         run: |
           mkdir assets
 
-          # move binaries to assets directory
-          for path in artifacts/*; do
-            declare artifact="$(basename "$path")"
-            mv "${path}/nk"* "assets/${artifact}"
+          for file in artifacts/*/*; do
+            filename="$(basename "$file")"
+            name="${filename%\.exe}"
+            extension="${filename#"$name"}"
+            platform="$(basename "$(dirname "$file")")"
+
+            mv "$file" "assets/${name}-${platform}${extension}"
+            chmod +x "assets/${name}-${platform}${extension}"
           done
 
           # create release
