@@ -82,7 +82,7 @@ pub enum PluginSource {
 
 lazy_static! {
     static ref GITHUB_PLUGIN_REGEX: Regex = Regex::new(
-        r"^(?<owner>.+?)/(?<repo>.+?)(@(?<version>.+?))?(#(?<plugin>.*))?$"
+        "^(?<owner>.+?)/(?<repo>.+?)(@(?<version>.+?))?(#(?<plugin>.*))?$"
     )
     .unwrap();
 }

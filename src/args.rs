@@ -23,7 +23,7 @@ pub struct Arguments {
         long,
         action = clap::builder::ArgAction::Version,
     )]
-    version: Option<bool>,
+    pub version: Option<bool>,
 }
 
 #[derive(Subcommand)]

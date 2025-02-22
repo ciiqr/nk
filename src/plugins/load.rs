@@ -132,7 +132,7 @@ pub async fn load_plugins(
     // download/update remote plugins
     for plugin in &config.plugins {
         match &plugin.source {
-            PluginSource::Local { source: _ } => {} // TODO: might want to link local plugins into ~/.nk/plugins/
+            PluginSource::Local { .. } => {} // TODO: might want to link local plugins into ~/.nk/plugins/
             PluginSource::Github {
                 owner,
                 repo,

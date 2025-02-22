@@ -30,7 +30,7 @@ trait Formatter {
     ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
-struct RawFormatter {}
+struct RawFormatter;
 impl Formatter for RawFormatter {
     fn write_result(
         &self,
@@ -44,7 +44,7 @@ impl Formatter for RawFormatter {
     }
 }
 
-struct PrettyFormatter {}
+struct PrettyFormatter;
 impl Formatter for PrettyFormatter {
     fn write_result(
         &self,

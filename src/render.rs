@@ -8,7 +8,7 @@ struct TemplatingEngine<'reg> {
     data: Mapping,
 }
 
-impl<'reg> TemplatingEngine<'reg> {
+impl TemplatingEngine<'_> {
     fn new(data: Mapping) -> Self {
         let mut registry = Handlebars::new();
         registry.set_strict_mode(true);

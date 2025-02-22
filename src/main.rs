@@ -1,12 +1,3 @@
-#![warn(clippy::all, clippy::nursery, clippy::cargo, clippy::single_match_else)]
-#![allow(
-    clippy::multiple_crate_versions,
-    clippy::module_name_repetitions,
-    clippy::use_self,
-    // TODO: fix:
-    clippy::future_not_send
-)]
-
 mod args;
 mod commands;
 mod config;
