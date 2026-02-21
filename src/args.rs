@@ -1,4 +1,4 @@
-use clap::{arg, ArgAction, Args, Parser, Subcommand, ValueEnum};
+use clap::{ArgAction, Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 use console::style;
 use lazy_static::lazy_static;

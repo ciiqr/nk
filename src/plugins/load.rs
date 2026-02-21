@@ -7,7 +7,7 @@ use crate::{
 use async_compression::futures::bufread::GzipDecoder;
 use async_tar::Archive;
 use futures::{
-    io::{self, BufReader, ErrorKind},
+    io::{self, BufReader},
     prelude::*,
 };
 use itertools::Itertools;
@@ -82,7 +82,7 @@ async fn download_github_plugin(
         // - ? should we simply rely on the when condition and asset order (first to match wins. if multiple match consider treating it as an error even...)
         let asset_priority = get_asset_priority(plugin, system_vars);
         let asset = manifest_plugin.assets.iter()
-            .filter(|a| asset_priority.iter().any(|ap| *ap == a.file))
+            .filter(|a| asset_priority.contains(&a.file))
             .sorted_by_cached_key(|a| {
                 asset_priority
                     .iter()
@@ -104,7 +104,7 @@ async fn download_github_plugin(
             let response = reqwest::get(asset_url).await?;
             let reader = response
                 .bytes_stream()
-                .map_err(|e| io::Error::new(ErrorKind::Other, e))
+                .map_err(io::Error::other)
                 .into_async_read();
 
             // extract
