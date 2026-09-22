@@ -182,6 +182,7 @@ pub enum SystemDistro {
     Ubuntu,
     Windows,
     // macos
+    GoldenGate,
     Tahoe,
     Sequoia,
     Sonoma,
@@ -244,6 +245,7 @@ fn get_macos_distro() -> Result<SystemDistro, Box<dyn std::error::Error>> {
     let version = version_string.split('.').collect::<Vec<_>>();
 
     match version[..] {
+        ["27", ..] => Ok(SystemDistro::GoldenGate),
         ["26", ..] => Ok(SystemDistro::Tahoe),
         ["15", ..] => Ok(SystemDistro::Sequoia),
         ["14", ..] => Ok(SystemDistro::Sonoma),
@@ -254,7 +256,9 @@ fn get_macos_distro() -> Result<SystemDistro, Box<dyn std::error::Error>> {
         ["10", "14", ..] => Ok(SystemDistro::Mojave),
         ["10", "13", ..] => Ok(SystemDistro::HighSierra),
         ["10", "12", ..] => Ok(SystemDistro::Sierra),
-        _ => Err(format!("Unrecognized macOS version: {}. Please open an issue at https://github.com/ciiqr/nk/issues", version_string).into()),
+        // TODO: maybe we just want to add os_version or something and give up on this
+        // _ => Err(format!("Unrecognized macOS version: {}. Please open an issue at https://github.com/ciiqr/nk/issues", version_string).into()),
+        _ => Ok(SystemDistro::Unknown),
     }
 }
 
