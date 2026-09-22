@@ -15,7 +15,7 @@ jobs:
     name: Bump
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
         with:
           # NOTE: needs a user token otherwise tag events won't be triggered
           token: ${{ secrets.GH_TOKEN }}
@@ -23,7 +23,7 @@ jobs:
         run: cargo install cargo-edit
       - name: Determine New Version
         id: version
-        uses: zwaldowski/semver-release-action@v4
+        uses: zwaldowski/semver-release-action@v6
         with:
           dry_run: true
           bump: ${{ github.event.inputs.bump }}
@@ -36,7 +36,7 @@ jobs:
           echo "VERSION=${VERSION}" >> $GITHUB_ENV
           echo "TAG=${TAG}" >> $GITHUB_ENV
       - name: Wait for validate job to finish
-        uses: pentible/wait-for-check-action@v1.0.1
+        uses: pentible/wait-for-check-action@v1.0.2
         with:
           check-name: Validate
       - name: Create Tag

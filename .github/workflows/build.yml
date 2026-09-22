@@ -27,7 +27,7 @@ jobs:
 
     runs-on: ${{ matrix.build.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Install target
         run: rustup target add ${{ matrix.build.target }}
       - name: Setup musl
@@ -60,7 +60,7 @@ jobs:
             echo 'EOF'
           } >> "$GITHUB_ENV"
       - name: Upload binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: ${{ matrix.build.platform }}
           path: ${{ env.ARTIFACT_PATHS }}
@@ -70,9 +70,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@main
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8.0.1
         with:
           path: artifacts
       - name: Create Release
